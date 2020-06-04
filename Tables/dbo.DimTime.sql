@@ -29,6 +29,7 @@ CREATE TABLE [dbo].[DimTime]
 [FirstDayOfNextMonth] [date] NOT NULL,
 [LastDayOfNextMonth] [date] NOT NULL,
 [DayOfYear] [smallint] NOT NULL,
+[DayOfSchoolYear] [smallint] NOT NULL,
 [LeapYear_Indicator] [bit] NOT NULL,
 [FederalHolidayName] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [FederalHoliday_Indicator] [bit] NOT NULL,
