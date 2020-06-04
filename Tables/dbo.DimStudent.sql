@@ -50,7 +50,7 @@ CREATE TABLE [dbo].[DimStudent]
 [EntrySchoolYear] [int] NOT NULL,
 [EntryCode] [nvarchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ExitWithdrawDate] [datetime2] NULL,
-[ExitWithdrawSchoolYear] [int] NOT NULL,
+[ExitWithdrawSchoolYear] [int] NULL,
 [ExitWithdrawCode] [nvarchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
