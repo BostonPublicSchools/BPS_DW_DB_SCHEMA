@@ -3,7 +3,6 @@ CREATE TABLE [dbo].[FactStudentAssessmentScore]
 [StudentKey] [int] NOT NULL,
 [TimeKey] [int] NOT NULL,
 [AssessmentKey] [int] NOT NULL,
-[Result] [nvarchar] (35) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [Score_AssessmentReportingMethodDescriptor_RawScore] [int] NULL,
 [Score_AssessmentReportingMethodDescriptor_ScaleScore] [int] NULL,
 [Score_AssessmentReportingMethodDescriptor_ProficiencyLevel] [nvarchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

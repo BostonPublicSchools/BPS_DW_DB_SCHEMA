@@ -2,8 +2,8 @@ CREATE TABLE [dbo].[DimSchool]
 (
 [SchoolKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[ShortNameOfInstitution] [nvarchar] (15) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[NameOfInstitution] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [SchoolCategoryType] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [SchoolCategoryType_Elementary_Indicator] [bit] NOT NULL,
 [SchoolCategoryType_Middle_Indicator] [bit] NOT NULL,
