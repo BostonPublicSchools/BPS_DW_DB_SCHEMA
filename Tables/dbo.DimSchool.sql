@@ -32,6 +32,8 @@ CREATE TABLE [dbo].[DimSchool]
 [SchoolGradeLevel_Ungraded_Indicator] [bit] NOT NULL,
 [TitleIPartASchoolDesignationTypeCodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [TitleIPartASchoolDesignation_Indicator] [bit] NOT NULL,
+[OperationalStatusTypeDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[OperationalStatusTypeDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
