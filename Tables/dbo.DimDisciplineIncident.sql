@@ -1,6 +1,7 @@
 CREATE TABLE [dbo].[DimDisciplineIncident]
 (
 [DisciplineIncidentKey] [int] NOT NULL IDENTITY(1, 1),
+[_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [SchoolKey] [int] NOT NULL,
 [ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -13,6 +14,8 @@ CREATE TABLE [dbo].[DimDisciplineIncident]
 [LocationDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [DisciplineDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [DisciplineDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[DisciplineDescriptor_ISS_Indicator] [bit] NOT NULL,
+[DisciplineDescriptor_OSS_Indicator] [bit] NOT NULL,
 [ReporterDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ReporterDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [IncidentReporterName] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,

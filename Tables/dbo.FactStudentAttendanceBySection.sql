@@ -10,7 +10,7 @@ CREATE TABLE [dbo].[FactStudentAttendanceBySection]
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[FactStudentAttendanceBySection] ADD CONSTRAINT [PK_FactStudentAttendanceBySection] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SectionKey], [StaffKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
+ALTER TABLE [dbo].[FactStudentAttendanceBySection] ADD CONSTRAINT [PK_FactStudentAttendanceBySection] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SectionKey], [SchoolKey], [StaffKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[FactStudentAttendanceBySection] ADD CONSTRAINT [FK_FactStudentAttendanceBySection_AttendanceEventCategoryKey] FOREIGN KEY ([AttendanceEventCategoryKey]) REFERENCES [dbo].[DimAttendanceEventCategory] ([AttendanceEventCategoryKey])
 GO
