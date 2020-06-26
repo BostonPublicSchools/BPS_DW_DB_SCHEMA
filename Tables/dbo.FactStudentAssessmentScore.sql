@@ -3,10 +3,10 @@ CREATE TABLE [dbo].[FactStudentAssessmentScore]
 [StudentKey] [int] NOT NULL,
 [TimeKey] [int] NOT NULL,
 [AssessmentKey] [int] NOT NULL,
-[Score_AssessmentReportingMethodDescriptor_RawScore] [int] NULL,
-[Score_AssessmentReportingMethodDescriptor_ScaleScore] [int] NULL,
-[Score_AssessmentReportingMethodDescriptor_ProficiencyLevel] [nvarchar] (25) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[Score_AssessmentReportingMethodDescriptor_Percentile] [float] NULL,
+[ScoreResult] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[IntegerScoreResult] [int] NULL,
+[DecimalScoreResult] [float] NULL,
+[LiteralScoreResult] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
