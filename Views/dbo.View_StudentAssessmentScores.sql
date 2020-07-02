@@ -13,13 +13,14 @@ SELECT StudentId,
 	   AssessmentTitle,
 	   AssessmentDate,  
 	   --pivoted from row values
-	   [Achievement/proficiency level],
-	   [Composite Rating],[Composite Score],
-	   [Percentile rank],
-	   [Proficiency level],
-	   [Promotion score],
-	   [Raw score],
-	   [Scale score]
+	   [Achievement/proficiency level] AS AchievementProficiencyLevel ,
+	   [Composite Rating] AS CompositeRating,
+	   [Composite Score] AS CompositeScore,
+	   [Percentile rank] AS PercentileRank,
+	   [Proficiency level] AS ProficiencyLevel,
+	   [Promotion score] AS PromotionScore,
+	   [Raw score] AS RawScore,
+	   [Scale score] AS ScaleScore
 FROM (
 		SELECT ds.StudentUniqueId AS StudentId,
 			   ds.StateId AS StudentStateId,
@@ -47,8 +48,5 @@ PIVOT
 						[Raw score],
 						[Scale score])
    ) AS PivotTable
-)
-
-	 
-
+);
 GO
