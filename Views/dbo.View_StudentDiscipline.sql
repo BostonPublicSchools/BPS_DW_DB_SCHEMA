@@ -24,6 +24,5 @@ FROM dbo.FactStudentDiscipline fsd
 		INNER JOIN dbo.DimTime dt ON fsd.TimeKey = dt.TimeKey	 
 		INNER JOIN dbo.DimSchool dsc ON fsd.SchoolKey = dsc.SchoolKey	 
 		INNER JOIN dbo.DimDisciplineIncident ddi ON fsd.DisciplineIncidentKey = ddi.DisciplineIncidentKey		
-)
-
+);
 GO
