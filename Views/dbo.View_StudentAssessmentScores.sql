@@ -34,8 +34,7 @@ FROM (
 		FROM dbo.FactStudentAssessmentScore fas 
 			 INNER JOIN dbo.DimStudent ds ON fas.StudentKey = ds.StudentKey
 			 INNER JOIN dbo.DimTime dt ON fas.TimeKey = dt.TimeKey	 
-			 INNER JOIN dbo.DimAssessment da ON fas.AssessmentKey = da.AssessmentKey
-		WHERE da.AssessmentIdentifier = 'MCAS 03 Grade ELA Standard 2018'
+			 INNER JOIN dbo.DimAssessment da ON fas.AssessmentKey = da.AssessmentKey		
 	) AS SourceTable 
 PIVOT 
    (
