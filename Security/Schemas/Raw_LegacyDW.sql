@@ -1,0 +1,3 @@
+CREATE SCHEMA [Raw_LegacyDW]
+AUTHORIZATION [dbo]
+GO
