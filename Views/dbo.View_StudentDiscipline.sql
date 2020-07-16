@@ -13,6 +13,8 @@ SELECT DISTINCT
 		ds.LastSurname AS LastName,
 		dsc.NameOfInstitution AS SchoolName,
 		dt.SchoolDate AS IncidentDate, 		
+		ddi.IncidentTime,
+		ddi.IncidentDescription,
 		ddi.BehaviorDescriptor_CodeValue AS IncidentType,
 		ddi.LocationDescriptor_CodeValue AS IncidentLocation,
 		ddi.DisciplineDescriptor_CodeValue AS IncidentAction ,
