@@ -14,6 +14,8 @@ CREATE TABLE [dbo].[DimCourse]
 [MaximumAvailableCredits] [int] NULL,
 [GPAApplicabilityType_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [GPAApplicabilityType_Description] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[SecondaryCourseLevelCharacteristicTypeDescriptor_Descriptor] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,

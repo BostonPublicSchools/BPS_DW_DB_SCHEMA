@@ -14,6 +14,8 @@ SELECT DISTINCT
 		dsc.NameOfInstitution AS SchoolName,
 		dc.CourseCode,
 		dc.CourseTitle,
+		dc.CourseLevelCharacteristicTypeDescriptor_CodeValue AS CourseType,
+		dc.SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue AS MassCourseType,
 		dt.SchoolTermDescriptor_CodeValue AS Term, 		
 		fsct.EarnedCredits,
 		fsct.PossibleCredits,
