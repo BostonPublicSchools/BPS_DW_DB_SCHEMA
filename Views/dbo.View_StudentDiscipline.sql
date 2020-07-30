@@ -11,7 +11,9 @@ SELECT DISTINCT
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
 		ds.LastSurname AS LastName,
-		dsc.NameOfInstitution AS SchoolName,
+		dsc.DistrictSchoolCode AS DistrictSchoolCode,
+		dsc.UmbrellaSchoolCode AS UmbrellaSchoolCode,
+		dsc.ShortNameOfInstitution AS SchoolName,
 		dt.SchoolDate AS IncidentDate, 		
 		ddi.IncidentTime,
 		ddi.IncidentDescription,
@@ -21,12 +23,14 @@ SELECT DISTINCT
 		ddi.ReporterDescriptor_CodeValue AS IncidentReporter,
 		ddi.DisciplineDescriptor_ISS_Indicator AS IsISS,
 		ddi.DisciplineDescriptor_OSS_Indicator AS IsOSS
+		
 FROM dbo.FactStudentDiscipline fsd 
 		INNER JOIN dbo.DimStudent ds ON fsd.StudentKey = ds.StudentKey
 		INNER JOIN dbo.DimTime dt ON fsd.TimeKey = dt.TimeKey	 
 		INNER JOIN dbo.DimSchool dsc ON fsd.SchoolKey = dsc.SchoolKey	 
 		INNER JOIN dbo.DimDisciplineIncident ddi ON fsd.DisciplineIncidentKey = ddi.DisciplineIncidentKey		
 );
+
 GO
 DECLARE @xp int
 SELECT @xp=2

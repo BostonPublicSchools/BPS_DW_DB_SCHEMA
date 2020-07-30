@@ -10,7 +10,9 @@ SELECT DISTINCT
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
-		ds.LastSurname AS LastName,
+		ds.LastSurname AS LastName,		
+		dsc.DistrictSchoolCode AS DistrictSchoolCode,
+		dsc.UmbrellaSchoolCode AS UmbrellaSchoolCode,
 		dsc.NameOfInstitution AS SchoolName,
 		dc.CourseCode,
 		dc.CourseTitle,
@@ -27,5 +29,6 @@ FROM dbo.FactStudentCourseTranscript fsct
 		INNER JOIN dbo.DimSchool dsc ON fsct.SchoolKey = dsc.SchoolKey		
 		INNER JOIN dbo.DimCourse dc ON fsct.CourseKey = dc.CourseKey		
 );
+
 
 GO

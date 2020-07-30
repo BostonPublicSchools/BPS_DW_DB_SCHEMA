@@ -2,7 +2,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
---create function to derive schoolyear from a date
+
 CREATE FUNCTION [dbo].[Func_GetSchoolYear]
 (
     @CurrentDate DATETIME
@@ -31,4 +31,5 @@ BEGIN
     RETURN @Result;
 
 END;
+
 GO

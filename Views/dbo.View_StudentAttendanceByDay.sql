@@ -10,6 +10,8 @@ SELECT StudentId,
        StudentStateId, 
 	   FirstName, 
 	   LastName, 
+	   [DistrictSchoolCode],
+	   [UmbrellaSchoolCode],	   
 	   SchoolName, 
 	   AttedanceDate,
 
@@ -29,7 +31,9 @@ FROM (
 			   ds.LastSurname AS LastName,
 			   dsc.NameOfInstitution AS SchoolName,
 			   dt.SchoolDate AS AttedanceDate, 		
-			   dact.AttendanceEventCategoryDescriptor_CodeValue AS AttendanceType			   
+			   dact.AttendanceEventCategoryDescriptor_CodeValue AS AttendanceType,
+		       dsc.DistrictSchoolCode AS DistrictSchoolCode,
+		       dsc.UmbrellaSchoolCode AS UmbrellaSchoolCode			 			 			   
 		FROM dbo.[FactStudentAttendanceByDay] fsabd 
 			 INNER JOIN dbo.DimStudent ds ON fsabd.StudentKey = ds.StudentKey
 			 INNER JOIN dbo.DimTime dt ON fsabd.TimeKey = dt.TimeKey	 
@@ -52,4 +56,5 @@ PIVOT
 						)
    ) AS PivotTable
 );
+
 GO

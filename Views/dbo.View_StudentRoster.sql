@@ -6,7 +6,7 @@ GO
 
 CREATE VIEW [dbo].[View_StudentRoster]
 AS(
-SELECT DISTINCT TOP 1000
+SELECT DISTINCT 
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
@@ -19,9 +19,11 @@ SELECT DISTINCT TOP 1000
 		ds.BirthDate,
 		ds.StudentAge,
 		ds.[GraduationSchoolYear],
-		dsc.NameOfInstitution AS SchoolName,
+		dsc.DistrictSchoolCode AS DistrictSchoolCode,
 		dsc.StateSchoolCode AS SchoolStateCode,
 		dsc.UmbrellaSchoolCode AS SchoolUmbrellaCode,
+		dsc.NameOfInstitution AS SchoolName,
+		
 		ds.Homeroom,
 		ds.HomeroomTeacher,
 		ds.SexType_Code AS Sex,
@@ -56,9 +58,11 @@ SELECT DISTINCT TOP 1000
 		ds.ValidTo,
 		ds.IsCurrent
 		
+		
 FROM dbo.DimStudent ds 		
      INNER JOIN dbo.DimSchool dsc ON ds.SchoolKey = dsc.SchoolKey
 		
 );
+
 
 GO
