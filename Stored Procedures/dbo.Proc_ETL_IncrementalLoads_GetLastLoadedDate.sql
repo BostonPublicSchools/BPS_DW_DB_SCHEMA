@@ -21,14 +21,14 @@ BEGIN
 	
     -- If the table exists, but was never loaded before, there won't have a record for it
 	-- A record is created for the @TableName with the minimum possible date in the LoadDate column
-	IF NOT EXISTS (SELECT 1 FROM LongitudinalPOC.[dbo].[IncrementalLoads] WHERE TableName = @TableName)
-		INSERT INTO LongitudinalPOC.[dbo].[IncrementalLoads](TableName,LoadDate)
+	IF NOT EXISTS (SELECT 1 FROM EdFiDW.[dbo].[IncrementalLoads] WHERE TableName = @TableName)
+		INSERT INTO EdFiDW.[dbo].[IncrementalLoads](TableName,LoadDate)
 		SELECT @TableName, '1753-01-01'
 
     -- Select the LoadDate for the @TableName
 	SELECT 
 		[LoadDate] AS [LoadDate]
-    FROM LongitudinalPOC.[dbo].[IncrementalLoads]
+    FROM EdFiDW.[dbo].[IncrementalLoads]
     WHERE 
 		TableName = @TableName;
 

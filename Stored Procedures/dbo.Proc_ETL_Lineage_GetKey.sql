@@ -16,7 +16,7 @@ BEGIN
 	DECLARE @StartLoad datetime = SYSDATETIME();
 
 	
-	INSERT INTO LongitudinalPOC.[dbo].[Lineage](
+	INSERT INTO EdFiDW.[dbo].[Lineage](
 		 [TableName]
 		,StartTime
 		,EndTime
@@ -34,7 +34,7 @@ BEGIN
 	-- If we're doing an initial load, remove the date of the most recent load for this table
 	IF (@LoadType = 'F')
 		BEGIN
-			UPDATE LongitudinalPOC.[dbo].[IncrementalLoads]
+			UPDATE EdFiDW.[dbo].[IncrementalLoads]
 			SET LoadDate = '1753-01-01'
 			WHERE TableName = @TableName
 
@@ -44,7 +44,7 @@ BEGIN
 
 	-- Select the key of the previously inserted row
 	SELECT MAX([LineageKey]) AS LineageKey
-	FROM LongitudinalPOC.dbo.[Lineage]
+	FROM EdFiDW.dbo.[Lineage]
 	WHERE 
 		[TableName] = @TableName
 		AND StartTime = @StartLoad
