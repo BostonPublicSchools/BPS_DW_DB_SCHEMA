@@ -8,7 +8,7 @@ CREATE TABLE [dbo].[DimDisciplineIncident]
 [SchoolYear] [int] NOT NULL,
 [IncidentDate] [date] NOT NULL,
 [IncidentTime] [time] NOT NULL,
-[IncidentDescription] [nvarchar] (4000) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[IncidentDescription] [nvarchar] (max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [BehaviorDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [BehaviorDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [LocationDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
