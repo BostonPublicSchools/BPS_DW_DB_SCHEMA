@@ -17,7 +17,7 @@ SELECT DISTINCT
 		dc.CourseCode,
 		dc.CourseTitle,
 		dc.CourseLevelCharacteristicTypeDescriptor_CodeValue AS CourseType,
-		dc.SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue AS MassCourseType,
+		dc.SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue AS MassCore,
 		dt.SchoolTermDescriptor_CodeValue AS Term, 		
 		fsct.EarnedCredits,
 		fsct.PossibleCredits,
@@ -29,6 +29,5 @@ FROM dbo.FactStudentCourseTranscript fsct
 		INNER JOIN dbo.DimSchool dsc ON fsct.SchoolKey = dsc.SchoolKey		
 		INNER JOIN dbo.DimCourse dc ON fsct.CourseKey = dc.CourseKey		
 );
-
 
 GO
