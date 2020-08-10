@@ -5,6 +5,7 @@ GO
 
 
 CREATE VIEW [dbo].[View_StudentCourseTranscript]
+WITH SCHEMABINDING
 AS(
 SELECT DISTINCT 
 		ds.StudentUniqueId AS StudentId,

@@ -3,8 +3,8 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
 CREATE VIEW [dbo].[View_StudentDiscipline]
+WITH SCHEMABINDING
 AS(
 SELECT DISTINCT 
 		ds.StudentUniqueId AS StudentId,
@@ -30,7 +30,6 @@ FROM dbo.FactStudentDiscipline fsd
 		INNER JOIN dbo.DimSchool dsc ON fsd.SchoolKey = dsc.SchoolKey	 
 		INNER JOIN dbo.DimDisciplineIncident ddi ON fsd.DisciplineIncidentKey = ddi.DisciplineIncidentKey		
 );
-
 GO
 DECLARE @xp int
 SELECT @xp=2

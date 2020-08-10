@@ -5,6 +5,7 @@ GO
 
 
 CREATE VIEW [dbo].[View_StudentRoster]
+WITH SCHEMABINDING
 AS(
 SELECT DISTINCT 
 		ds.StudentUniqueId AS StudentId,
@@ -63,6 +64,5 @@ FROM dbo.DimStudent ds
      INNER JOIN dbo.DimSchool dsc ON ds.SchoolKey = dsc.SchoolKey
 		
 );
-
 
 GO

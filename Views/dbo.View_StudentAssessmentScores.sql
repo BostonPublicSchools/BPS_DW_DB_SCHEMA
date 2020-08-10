@@ -4,6 +4,7 @@ SET ANSI_NULLS ON
 GO
 
 CREATE VIEW [dbo].[View_StudentAssessmentScores]
+WITH SCHEMABINDING
 AS(
 SELECT StudentId, 
        StudentStateId, 
@@ -34,7 +35,8 @@ FROM (
 		FROM dbo.FactStudentAssessmentScore fas 
 			 INNER JOIN dbo.DimStudent ds ON fas.StudentKey = ds.StudentKey
 			 INNER JOIN dbo.DimTime dt ON fas.TimeKey = dt.TimeKey	 
-			 INNER JOIN dbo.DimAssessment da ON fas.AssessmentKey = da.AssessmentKey		
+			 INNER JOIN dbo.DimAssessment da ON fas.AssessmentKey = da.AssessmentKey
+			 
 	) AS SourceTable 
 PIVOT 
    (
