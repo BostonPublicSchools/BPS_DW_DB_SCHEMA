@@ -4,10 +4,12 @@ SET ANSI_NULLS ON
 GO
 
 
+
 CREATE VIEW [dbo].[View_StudentRoster]
 WITH SCHEMABINDING
 AS(
-SELECT DISTINCT 
+SELECT  
+		ds.StudentKey AS StudentKey,
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
@@ -54,6 +56,13 @@ SELECT DISTINCT
 		ds.[LimitedEnglishProficiency_NotEnglisLearner_Indicator],
 		ds.[EconomicDisadvantage_Indicator],
 
+		ds.EntryDate,
+		ds.EntrySchoolYear,
+		ds.EntryCode,
+
+		ds.ExitWithdrawDate,
+		ds.ExitWithdrawSchoolYear,
+		ds.ExitWithdrawCode,
 
 		ds.ValidFrom,
 		ds.ValidTo,
@@ -65,4 +74,7 @@ FROM dbo.DimStudent ds
 		
 );
 
+GO
+
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentRoster] ON [dbo].[View_StudentRoster] ([StudentKey]) ON [PRIMARY]
 GO

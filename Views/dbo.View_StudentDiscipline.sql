@@ -6,7 +6,7 @@ GO
 CREATE VIEW [dbo].[View_StudentDiscipline]
 WITH SCHEMABINDING
 AS(
-SELECT DISTINCT 
+SELECT  ds.StudentKey,
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
@@ -22,8 +22,7 @@ SELECT DISTINCT
 		ddi.DisciplineDescriptor_CodeValue AS IncidentAction ,
 		ddi.ReporterDescriptor_CodeValue AS IncidentReporter,
 		ddi.DisciplineDescriptor_ISS_Indicator AS IsISS,
-		ddi.DisciplineDescriptor_OSS_Indicator AS IsOSS
-		
+		ddi.DisciplineDescriptor_OSS_Indicator AS IsOSS		
 FROM dbo.FactStudentDiscipline fsd 
 		INNER JOIN dbo.DimStudent ds ON fsd.StudentKey = ds.StudentKey
 		INNER JOIN dbo.DimTime dt ON fsd.TimeKey = dt.TimeKey	 

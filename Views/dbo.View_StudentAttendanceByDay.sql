@@ -43,7 +43,7 @@ FROM (
 			 INNER JOIN dbo.DimSchool dsc ON fsabd.SchoolKey = dsc.SchoolKey	 
 			 INNER JOIN dbo.DimAttendanceEventCategory dact ON fsabd.AttendanceEventCategoryKey = dact.AttendanceEventCategoryKey		
 	    WHERE 1=1 
-		AND ds.StudentUniqueId = 363896
+		--AND ds.StudentUniqueId = 363896
 		--AND dt.SchoolDate = '2018-10-26'
 
 		

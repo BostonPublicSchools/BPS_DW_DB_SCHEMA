@@ -4,6 +4,7 @@ SET ANSI_NULLS ON
 GO
 
 CREATE VIEW [dbo].[View_StudentAttendance_ADA]
+WITH SCHEMABINDING
 AS (
 	 SELECT DISTINCT 
 		   v_sabd.StudentId, 

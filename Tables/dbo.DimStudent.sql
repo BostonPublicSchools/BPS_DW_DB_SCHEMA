@@ -29,6 +29,7 @@ CREATE TABLE [dbo].[DimStudent]
 [SexType_NotSelected_Indicator] [bit] NOT NULL,
 [RaceCode] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [RaceDescription] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[StateRaceCode] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [Race_AmericanIndianAlaskanNative_Indicator] [bit] NOT NULL,
 [Race_Asian_Indicator] [bit] NOT NULL,
 [Race_BlackAfricaAmerican_Indicator] [bit] NOT NULL,
