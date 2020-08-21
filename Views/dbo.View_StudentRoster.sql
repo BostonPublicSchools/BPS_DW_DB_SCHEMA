@@ -23,7 +23,7 @@ SELECT
 		ds.StudentAge,
 		ds.[GraduationSchoolYear],
 		dsc.DistrictSchoolCode AS DistrictSchoolCode,
-		dsc.StateSchoolCode AS SchoolStateCode,
+		dsc.StateSchoolCode AS StateSchoolCode,
 		dsc.UmbrellaSchoolCode AS SchoolUmbrellaCode,
 		dsc.NameOfInstitution AS SchoolName,
 		
@@ -35,7 +35,7 @@ SELECT
 	    ds.[SexType_NotSelected_Indicator],
 
 
-		ds.RaceCode AS Race,
+		ds.StateRaceCode AS StateRace,
 		ds.Race_AmericanIndianAlaskanNative_Indicator,
 		ds.Race_Asian_Indicator,
 		ds.Race_BlackAfricaAmerican_Indicator,
@@ -50,10 +50,10 @@ SELECT
 		ds.[Migrant_Indicator],
 		ds.Homeless_Indicator,
 		ds.IEP_Indicator,		
-		ds.LimitedEnglishProficiencyDescriptor_CodeValue AS LEPCode,
-		ds.[LimitedEnglishProficiency_EnglishLearner_Indicator],
-		ds.[LimitedEnglishProficiency_Former_Indicator],
-		ds.[LimitedEnglishProficiency_NotEnglisLearner_Indicator],
+		ds.[English_Learner_Code_Value] AS LEPCode,
+		ds.[English_Learner_Indicator],
+		ds.[Former_English_Learner_Indicator],
+		ds.[Never_English_Learner_Indicator],
 		ds.[EconomicDisadvantage_Indicator],
 
 		ds.EntryDate,

@@ -6,7 +6,8 @@ GO
 CREATE VIEW [dbo].[View_StudentAttendance_ADA]
 WITH SCHEMABINDING
 AS (
-	 SELECT DISTINCT 
+	 SELECT  DISTINCT 
+		   v_sabd.StudentKey,
 		   v_sabd.StudentId, 
 		   v_sabd.StudentStateId, 
 		   v_sabd.FirstName, 
@@ -15,11 +16,11 @@ AS (
 		   v_sabd.[UmbrellaSchoolCode],	   
 		   v_sabd.SchoolName, 	   
 		   v_sabd.SchoolYear,	   
-		   SUM(v_sabd.[In Attendance]) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysPresent,
-		   SUM(CASE WHEN v_sabd.[In Attendance] = 1 THEN 0 ELSE 1 end) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsent,
-		   SUM(v_sabd.[Unexcused Absence]) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsentUnexcused,
-		   COUNT(*) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysMembership,
-		   SUM(v_sabd.[In Attendance]) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear) / CONVERT(Float,COUNT(*) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear)) * 100 AS ADA
+		   SUM(CAST(v_sabd.[InAttendance] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysPresent,
+		   SUM(CASE WHEN v_sabd.[InAttendance] = 1 THEN 0 ELSE 1 end) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsent,
+		   SUM(CAST(v_sabd.[UnexcusedAbsence] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsentUnexcused,
+		   COUNT(*) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysMembership,
+		   SUM(CAST(v_sabd.[InAttendance] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) / CONVERT(Float,COUNT(*) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear)) * 100 AS ADA
 	--select *
 	FROM dbo.View_StudentAttendanceByDay v_sabd
 );
