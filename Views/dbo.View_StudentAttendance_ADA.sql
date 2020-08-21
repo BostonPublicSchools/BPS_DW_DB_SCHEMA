@@ -6,7 +6,7 @@ GO
 CREATE VIEW [dbo].[View_StudentAttendance_ADA]
 WITH SCHEMABINDING
 AS (
-	 SELECT  DISTINCT 
+	 SELECT   
 		   v_sabd.StudentKey,
 		   v_sabd.StudentId, 
 		   v_sabd.StudentStateId, 

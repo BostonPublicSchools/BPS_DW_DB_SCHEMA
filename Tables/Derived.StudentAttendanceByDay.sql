@@ -7,7 +7,8 @@ CREATE TABLE [Derived].[StudentAttendanceByDay]
 [ExcusedAbsence] [bit] NOT NULL,
 [UnexcusedAbsence] [bit] NOT NULL,
 [NoContact] [bit] NOT NULL,
-[InAttendance] [bit] NOT NULL
+[InAttendance] [bit] NOT NULL,
+[Tardy] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Derived].[StudentAttendanceByDay] ADD CONSTRAINT [PK_Derived_StudentAttendanceByDay] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SchoolKey]) ON [PRIMARY]

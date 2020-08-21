@@ -14,6 +14,7 @@ AS(
 			dsc.DistrictSchoolCode AS DistrictSchoolCode,
 		    dsc.UmbrellaSchoolCode AS UmbrellaSchoolCode,
 			dsc.NameOfInstitution AS SchoolName,
+			dt.TimeKey,
 			dt.SchoolDate AS AttedanceDate, 		
 			dt.SchoolYear,
 			sabd.[EarlyDeparture],
@@ -31,5 +32,5 @@ AS(
 );
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [AttedanceDate]) ON [PRIMARY]
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [TimeKey]) ON [PRIMARY]
 GO
