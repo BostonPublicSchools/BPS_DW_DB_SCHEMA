@@ -6,14 +6,17 @@ GO
 CREATE VIEW [dbo].[View_StudentAssessmentScores]
 WITH SCHEMABINDING
 AS(
-   SELECT ds.StudentKey,
-          ds.StudentUniqueId AS StudentId,
+   SELECT sas.StudentKey,
+          sas.AssessmentKey,
+		  sas.TimeKey,
+		  ds.StudentUniqueId AS StudentId,
 		  ds.StateId AS StudentStateId,
 		  ds.FirstName,
 		  ds.LastSurname AS LastName,
 		  da.AssessmentIdentifier,
 		  da.AssessmentTitle,
 		  dt.SchoolDate AS AssessmentDate, 
+		  
 		  sas.AchievementProficiencyLevel,
 		  sas.CompositeRating,
 		  sas.CompositeScore,
@@ -29,5 +32,5 @@ FROM Derived.StudentAssessmentScore sas
 );
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAssessmentScores] ON [dbo].[View_StudentAssessmentScores] ([StudentKey], [AssessmentIdentifier], [AssessmentDate]) ON [PRIMARY]
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAssessmentScores] ON [dbo].[View_StudentAssessmentScores] ([StudentKey], [AssessmentKey], [TimeKey]) ON [PRIMARY]
 GO

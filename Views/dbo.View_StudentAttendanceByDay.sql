@@ -6,15 +6,16 @@ GO
 CREATE VIEW [dbo].[View_StudentAttendanceByDay]
 WITH SCHEMABINDING
 AS(
-    SELECT  ds.StudentKey,
+    SELECT  sabd.StudentKey,
+	        sabd.TimeKey,
+			sabd.SchoolKey,
 		    ds.StudentUniqueId AS StudentId,
 			ds.StateId AS StudentStateId,
 			ds.FirstName,
 			ds.LastSurname AS LastName,
 			dsc.DistrictSchoolCode AS DistrictSchoolCode,
 		    dsc.UmbrellaSchoolCode AS UmbrellaSchoolCode,
-			dsc.NameOfInstitution AS SchoolName,
-			dt.TimeKey,
+			dsc.NameOfInstitution AS SchoolName,			
 			dt.SchoolDate AS AttedanceDate, 		
 			dt.SchoolYear,
 			sabd.[EarlyDeparture],
@@ -32,5 +33,5 @@ AS(
 );
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [TimeKey]) ON [PRIMARY]
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [SchoolKey], [TimeKey]) ON [PRIMARY]
 GO

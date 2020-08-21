@@ -6,7 +6,9 @@ GO
 CREATE VIEW [dbo].[View_StudentDiscipline]
 WITH SCHEMABINDING
 AS(
-SELECT  ds.StudentKey,
+SELECT  fsd.StudentKey,
+        fsd.TimeKey,
+		fsd.SchoolKey,
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
