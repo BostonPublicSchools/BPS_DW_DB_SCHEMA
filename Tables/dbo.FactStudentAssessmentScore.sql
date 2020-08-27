@@ -12,6 +12,8 @@ CREATE TABLE [dbo].[FactStudentAssessmentScore]
 GO
 ALTER TABLE [dbo].[FactStudentAssessmentScore] ADD CONSTRAINT [PK_FactStudentAssessmentScores] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [AssessmentKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentAssessmentScore] ON [dbo].[FactStudentAssessmentScore] ([StudentKey], [TimeKey], [AssessmentKey], [ScoreResult], [IntegerScoreResult], [DecimalScoreResult], [LiteralScoreResult], [LineageKey]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[FactStudentAssessmentScore] ADD CONSTRAINT [FK_FactStudentAssessmentScore_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
 GO
 ALTER TABLE [dbo].[FactStudentAssessmentScore] ADD CONSTRAINT [FK_FactStudentAssessmentScore_TimeKey] FOREIGN KEY ([AssessmentKey]) REFERENCES [dbo].[DimAssessment] ([AssessmentKey])

@@ -24,5 +24,7 @@ CREATE TABLE [dbo].[DimAssessment]
 GO
 ALTER TABLE [dbo].[DimAssessment] ADD CONSTRAINT [PK_DimAssessment] PRIMARY KEY CLUSTERED  ([AssessmentKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimAssessment_CoveringIndex] ON [dbo].[DimAssessment] ([_sourceKey], [ValidFrom]) INCLUDE ([AssessmentKey], [ValidTo]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[DimAssessment] ADD CONSTRAINT [FK_DimAssessment_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
 GO

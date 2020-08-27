@@ -13,6 +13,8 @@ CREATE TABLE [dbo].[FactStudentCourseTranscript]
 GO
 ALTER TABLE [dbo].[FactStudentCourseTranscript] ADD CONSTRAINT [PK_FactStudentCourseTranscript] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [CourseKey], [SchoolKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentCourseTranscript] ON [dbo].[FactStudentCourseTranscript] ([StudentKey], [TimeKey], [CourseKey], [SchoolKey], [EarnedCredits], [PossibleCredits], [FinalLetterGradeEarned], [FinalNumericGradeEarned], [LineageKey]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[FactStudentCourseTranscript] ADD CONSTRAINT [FK_FactStudentCourseTranscript_CourseKey] FOREIGN KEY ([CourseKey]) REFERENCES [dbo].[DimCourse] ([CourseKey])
 GO
 ALTER TABLE [dbo].[FactStudentCourseTranscript] ADD CONSTRAINT [FK_FactStudentCourseTranscript_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])

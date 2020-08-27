@@ -64,6 +64,8 @@ CREATE TABLE [dbo].[DimStudent]
 GO
 ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [PK_DimStudent] PRIMARY KEY CLUSTERED  ([StudentKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom]) INCLUDE ([StudentKey], [ValidTo]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [FK_DimStudent_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
 GO
 ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [FK_DimStudent_SchoolKey] FOREIGN KEY ([SchoolKey]) REFERENCES [dbo].[DimSchool] ([SchoolKey])

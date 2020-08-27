@@ -17,3 +17,5 @@ CREATE TABLE [dbo].[DimAttendanceEventCategory]
 GO
 ALTER TABLE [dbo].[DimAttendanceEventCategory] ADD CONSTRAINT [PK_DimAttendanceEventCategory] PRIMARY KEY CLUSTERED  ([AttendanceEventCategoryKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimAttendanceEventCategory_CoveringIndex] ON [dbo].[DimAttendanceEventCategory] ([_sourceKey], [ValidFrom]) INCLUDE ([AttendanceEventCategoryKey], [ValidTo]) ON [PRIMARY]
+GO

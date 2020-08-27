@@ -6,22 +6,23 @@ GO
 CREATE VIEW [dbo].[View_StudentAttendance_ADA]
 WITH SCHEMABINDING
 AS (
-	 SELECT   
-		   v_sabd.StudentKey,
-		   v_sabd.StudentId, 
-		   v_sabd.StudentStateId, 
-		   v_sabd.FirstName, 
-		   v_sabd.LastName, 
-		   v_sabd.[DistrictSchoolCode],
-		   v_sabd.[UmbrellaSchoolCode],	   
-		   v_sabd.SchoolName, 	   
-		   v_sabd.SchoolYear,	   
-		   SUM(CAST(v_sabd.[InAttendance] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysPresent,
-		   SUM(CASE WHEN v_sabd.[InAttendance] = 1 THEN 0 ELSE 1 end) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsent,
-		   SUM(CAST(v_sabd.[UnexcusedAbsence] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysAbsentUnexcused,
-		   COUNT(*) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) AS NumberOfDaysMembership,
-		   SUM(CAST(v_sabd.[InAttendance] AS int)) OVER (PARTITION BY v_sabd.StudentKey,v_sabd.SchoolName,v_sabd.SchoolYear) / CONVERT(Float,COUNT(*) OVER (PARTITION BY v_sabd.StudentId,v_sabd.SchoolName,v_sabd.SchoolYear)) * 100 AS ADA
-	--select *
-	FROM dbo.View_StudentAttendanceByDay v_sabd
+     select  StudentId, 
+			 StudentStateId, 
+			 FirstName, 
+			 LastName, 
+			 [DistrictSchoolCode],
+			 [UmbrellaSchoolCode],	   
+			 SchoolName, 	   
+			 SchoolYear,
+			 [NumberOfDaysPresent]
+			,[NumberOfDaysAbsent]
+			,[NumberOfDaysAbsentUnexcused]
+			,[NumberOfDaysMembership]
+			,[ADA]
+	 FROM .[Derived].[StudentAttendanceADA]
+	 
 );
+GO
+
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendance_ADA] ON [dbo].[View_StudentAttendance_ADA] ([StudentId], [DistrictSchoolCode], [SchoolYear]) ON [PRIMARY]
 GO

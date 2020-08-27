@@ -9,6 +9,7 @@ AS(
 SELECT  fsd.StudentKey,
         fsd.TimeKey,
 		fsd.SchoolKey,
+		fsd.DisciplineIncidentKey,
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
@@ -31,6 +32,9 @@ FROM dbo.FactStudentDiscipline fsd
 		INNER JOIN dbo.DimSchool dsc ON fsd.SchoolKey = dsc.SchoolKey	 
 		INNER JOIN dbo.DimDisciplineIncident ddi ON fsd.DisciplineIncidentKey = ddi.DisciplineIncidentKey		
 );
+GO
+
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentDiscipline] ON [dbo].[View_StudentDiscipline] ([StudentKey], [TimeKey], [SchoolKey], [DisciplineIncidentKey]) ON [PRIMARY]
 GO
 DECLARE @xp int
 SELECT @xp=2

@@ -7,7 +7,10 @@ GO
 CREATE VIEW [dbo].[View_StudentCourseTranscript]
 WITH SCHEMABINDING
 AS(
-SELECT  ds.StudentKey,
+SELECT  fsct.StudentKey,
+        fsct.TimeKey,
+		fsct.SchoolKey,
+		fsct.CourseKey,
 		ds.StudentUniqueId AS StudentId,
 		ds.StateId AS StudentStateId,
 		ds.FirstName,
@@ -31,4 +34,7 @@ FROM dbo.FactStudentCourseTranscript fsct
 		INNER JOIN dbo.DimCourse dc ON fsct.CourseKey = dc.CourseKey		
 );
 
+GO
+
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentCourseTranscript] ON [dbo].[View_StudentCourseTranscript] ([StudentKey], [TimeKey], [SchoolKey], [CourseKey]) ON [PRIMARY]
 GO

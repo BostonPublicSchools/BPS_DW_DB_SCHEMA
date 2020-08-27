@@ -9,6 +9,8 @@ CREATE TABLE [dbo].[FactStudentDiscipline]
 GO
 ALTER TABLE [dbo].[FactStudentDiscipline] ADD CONSTRAINT [PK_FactStudentDiscipline] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SchoolKey], [DisciplineIncidentKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentDiscipline] ON [dbo].[FactStudentDiscipline] ([StudentKey], [TimeKey], [SchoolKey], [DisciplineIncidentKey], [LineageKey]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[FactStudentDiscipline] ADD CONSTRAINT [FK_FactStudentDiscipline_DisciplineIncidentKey] FOREIGN KEY ([DisciplineIncidentKey]) REFERENCES [dbo].[DimDisciplineIncident] ([DisciplineIncidentKey])
 GO
 ALTER TABLE [dbo].[FactStudentDiscipline] ADD CONSTRAINT [FK_FactStudentDiscipline_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])

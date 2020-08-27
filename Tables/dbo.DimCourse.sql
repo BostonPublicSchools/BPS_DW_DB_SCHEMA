@@ -24,5 +24,7 @@ CREATE TABLE [dbo].[DimCourse]
 GO
 ALTER TABLE [dbo].[DimCourse] ADD CONSTRAINT [PK_DimCourse] PRIMARY KEY CLUSTERED  ([CourseKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom]) INCLUDE ([CourseKey], [ValidTo]) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[DimCourse] ADD CONSTRAINT [FK_DimCourse_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
 GO
