@@ -192,7 +192,7 @@ BEGIN
 					  0 AS IsCurrent		
 					  
 				--select distinct *
-				FROM  [EdFiDW].[Raw_LegacyDW].[DisciplineIncidents] di
+				FROM  [Raw_LegacyDW].[DisciplineIncidents] di
 					  INNER JOIN dbo.DimSchool dschool ON CONCAT_WS('|', 'Ed-Fi', Convert(NVARCHAR(MAX),di.[SKL_SCHOOL_ID]))   = dschool._sourceKey 
 					  INNER JOIN dbo.DimTime dt ON di.CND_INCIDENT_DATE = dt.SchoolDate
 														 AND dt.SchoolKey is not null   
