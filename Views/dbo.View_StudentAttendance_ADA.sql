@@ -19,7 +19,7 @@ AS (
 			,[NumberOfDaysAbsentUnexcused]
 			,[NumberOfDaysMembership]
 			,[ADA]
-	 FROM .[Derived].[StudentAttendanceADA]
+	 FROM [Derived].[StudentAttendanceADA]
 	 
 );
 GO

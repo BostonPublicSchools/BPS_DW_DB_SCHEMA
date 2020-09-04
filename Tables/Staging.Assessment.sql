@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[DimAssessment]
+CREATE TABLE [Staging].[Assessment]
 (
 [AssessmentKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (2000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -16,13 +16,11 @@ CREATE TABLE [dbo].[DimAssessment]
 [AssessmentPerformanceLevel_Indicator] [bit] NOT NULL,
 [ObjectiveAssessmentScore_Indicator] [bit] NOT NULL,
 [ObjectiveAssessmentPerformanceLevel_Indicator] [bit] NOT NULL,
+[AssessmentModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
-[IsCurrent] [bit] NOT NULL,
-[LineageKey] [int] NOT NULL
+[IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimAssessment] ADD CONSTRAINT [PK_DimAssessment] PRIMARY KEY CLUSTERED  ([AssessmentKey]) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [DimAssessment_CoveringIndex] ON [dbo].[DimAssessment] ([_sourceKey], [ValidFrom]) INCLUDE ([AssessmentKey], [ValidTo]) ON [PRIMARY]
+ALTER TABLE [Staging].[Assessment] ADD CONSTRAINT [PK_StaginAssessment] PRIMARY KEY CLUSTERED  ([AssessmentKey]) ON [PRIMARY]
 GO

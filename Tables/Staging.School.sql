@@ -2,6 +2,7 @@ CREATE TABLE [Staging].[School]
 (
 [SchoolKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[DistrictSchoolCode] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [StateSchoolCode] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [UmbrellaSchoolCode] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -21,7 +22,8 @@ CREATE TABLE [Staging].[School]
 [SchoolCategoryModifiedDate] [datetime] NOT NULL,
 [SchoolTitle1StatusModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
-[ValidTo] [datetime] NOT NULL
+[ValidTo] [datetime] NOT NULL,
+[IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Staging].[School] ADD CONSTRAINT [PK_StagingSchool] PRIMARY KEY CLUSTERED  ([SchoolKey]) ON [PRIMARY]

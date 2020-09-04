@@ -3,8 +3,8 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
-CREATE FUNCTION [dbo].[Func_GetHolidayFromDate]
+--create function to derive holidays from a date
+CREATE FUNCTION [dbo].[Func_ETL_GetHolidayFromDate]
 (
     @date  date
 )

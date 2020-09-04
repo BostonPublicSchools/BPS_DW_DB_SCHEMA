@@ -2,10 +2,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
-
-
-
 CREATE VIEW [dbo].[View_StudentRoster]
 WITH SCHEMABINDING
 AS(
@@ -19,6 +15,7 @@ SELECT
 		ds.FullName,
 		ds.LastSurname AS LastName,
 		ds.PrimaryElectronicMailAddress AS StudentEmail,
+		ds.GradeLevelDescriptor_CodeValue AS SourceGradeLevel ,
 		case ds.GradeLevelDescriptor_CodeValue 
 			when 'Eighth grade' then 	'08'
 			when 'Eleventh grade' then 	'11'
@@ -34,7 +31,7 @@ SELECT
 			when 'Tenth grade' then 	'10'
 			when 'Third grade' then 	'03'
 			when 'Twelfth grade' then 	'12'
-			ELSE 'N/A'
+			ELSE ds.GradeLevelDescriptor_CodeValue 
 		end  AS GradeLevel,
 		ds.BirthDate,
 		ds.StudentAge,

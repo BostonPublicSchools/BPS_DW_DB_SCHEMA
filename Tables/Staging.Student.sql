@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[DimStudent]
+CREATE TABLE [Staging].[Student]
 (
 [StudentKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -56,13 +56,12 @@ CREATE TABLE [dbo].[DimStudent]
 [ExitWithdrawDate] [datetime2] NULL,
 [ExitWithdrawSchoolYear] [int] NULL,
 [ExitWithdrawCode] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[StudentMainInfoModifiedDate] [datetime] NOT NULL,
+[StudentSchoolAssociationModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
-[IsCurrent] [bit] NOT NULL,
-[LineageKey] [int] NOT NULL
+[IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [PK_DimStudent] PRIMARY KEY CLUSTERED  ([StudentKey]) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom]) INCLUDE ([StudentKey], [ValidTo]) ON [PRIMARY]
+ALTER TABLE [Staging].[Student] ADD CONSTRAINT [PK_StagingStudent] PRIMARY KEY CLUSTERED  ([StudentKey]) ON [PRIMARY]
 GO

@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[DimCourse]
+CREATE TABLE [Staging].[Course]
 (
 [CourseKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -16,13 +16,11 @@ CREATE TABLE [dbo].[DimCourse]
 [GPAApplicabilityType_Description] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [SecondaryCourseLevelCharacteristicTypeDescriptor_Description] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[CourseModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
-[IsCurrent] [bit] NOT NULL,
-[LineageKey] [int] NOT NULL
+[IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimCourse] ADD CONSTRAINT [PK_DimCourse] PRIMARY KEY CLUSTERED  ([CourseKey]) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom]) INCLUDE ([CourseKey], [ValidTo]) ON [PRIMARY]
+ALTER TABLE [Staging].[Course] ADD CONSTRAINT [PK_StagingCourse] PRIMARY KEY CLUSTERED  ([CourseKey]) ON [PRIMARY]
 GO

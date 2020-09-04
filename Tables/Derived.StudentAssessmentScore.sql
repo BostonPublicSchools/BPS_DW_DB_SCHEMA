@@ -15,5 +15,3 @@ CREATE TABLE [Derived].[StudentAssessmentScore]
 GO
 ALTER TABLE [Derived].[StudentAssessmentScore] ADD CONSTRAINT [PK_Derived_StudentAssessmentScore] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [AssessmentKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_Derived_StudentAssessmentScore] ON [Derived].[StudentAssessmentScore] ([StudentKey], [TimeKey], [AssessmentKey], [AchievementProficiencyLevel], [CompositeRating], [CompositeScore], [PercentileRank], [ProficiencyLevel], [PromotionScore], [RawScore], [ScaleScore]) ON [PRIMARY]
-GO

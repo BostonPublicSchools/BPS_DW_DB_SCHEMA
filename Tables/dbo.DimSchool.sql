@@ -27,5 +27,3 @@ ALTER TABLE [dbo].[DimSchool] ADD CONSTRAINT [PK_DimSchool] PRIMARY KEY CLUSTERE
 GO
 CREATE NONCLUSTERED INDEX [DimSchool_CoveringIndex] ON [dbo].[DimSchool] ([_sourceKey], [ValidFrom]) INCLUDE ([SchoolKey], [ValidTo]) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimSchool] ADD CONSTRAINT [FK_DimSchool_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
-GO

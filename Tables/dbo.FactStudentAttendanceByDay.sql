@@ -1,5 +1,6 @@
 CREATE TABLE [dbo].[FactStudentAttendanceByDay]
 (
+[_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [StudentKey] [int] NOT NULL,
 [TimeKey] [int] NOT NULL,
 [SchoolKey] [int] NOT NULL,
@@ -10,11 +11,7 @@ CREATE TABLE [dbo].[FactStudentAttendanceByDay]
 GO
 ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [PK_FactStudentAttendanceByDay] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentAttendanceByDay] ON [dbo].[FactStudentAttendanceByDay] ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey], [AttendanceEventReason], [LineageKey]) ON [PRIMARY]
-GO
 ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [FK_FactStudentAttendanceByDay_AttendanceEventCategoryKey] FOREIGN KEY ([AttendanceEventCategoryKey]) REFERENCES [dbo].[DimAttendanceEventCategory] ([AttendanceEventCategoryKey])
-GO
-ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [FK_FactStudentAttendanceByDay_LineageKey] FOREIGN KEY ([LineageKey]) REFERENCES [dbo].[Lineage] ([LineageKey])
 GO
 ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [FK_FactStudentAttendanceByDay_SchoolKey] FOREIGN KEY ([SchoolKey]) REFERENCES [dbo].[DimSchool] ([SchoolKey])
 GO

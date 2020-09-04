@@ -2,9 +2,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 SET ANSI_NULLS ON
 GO
-
-
-CREATE FUNCTION [dbo].[Func_GetEasterHolidays]
+--create function to derive eastern holidays from a date
+CREATE FUNCTION [dbo].[Func_ETL_GetEasterHolidays]
 (
     @TheYear INT
 )

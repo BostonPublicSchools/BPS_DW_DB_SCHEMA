@@ -1,4 +1,4 @@
-CREATE TABLE [dbo].[DimDisciplineIncident]
+CREATE TABLE [Staging].[DisciplineIncident]
 (
 [DisciplineIncidentKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -22,13 +22,11 @@ CREATE TABLE [dbo].[DimDisciplineIncident]
 [IncidentReporterName] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [ReportedToLawEnforcement_Indicator] [bit] NOT NULL,
 [IncidentCost] [money] NOT NULL,
+[IncidentModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
-[IsCurrent] [bit] NOT NULL,
-[LineageKey] [int] NOT NULL
+[IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimDisciplineIncident] ADD CONSTRAINT [PK_DimDisciplineIncident] PRIMARY KEY CLUSTERED  ([DisciplineIncidentKey]) ON [PRIMARY]
-GO
-CREATE NONCLUSTERED INDEX [DimDisciplineIncident_CoveringIndex] ON [dbo].[DimDisciplineIncident] ([_sourceKey], [ValidFrom]) INCLUDE ([DisciplineIncidentKey], [ValidTo]) ON [PRIMARY]
+ALTER TABLE [Staging].[DisciplineIncident] ADD CONSTRAINT [PK_StagingDisciplineIncident] PRIMARY KEY CLUSTERED  ([DisciplineIncidentKey]) ON [PRIMARY]
 GO
