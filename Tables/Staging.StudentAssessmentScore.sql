@@ -10,9 +10,9 @@ CREATE TABLE [Staging].[StudentAssessmentScore]
 [DecimalScoreResult] [float] NULL,
 [LiteralScoreResult] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ModifiedDate] [datetime] NULL,
-[_sourceStudentKey] [int] NULL,
-[_sourceTimeKey] [int] NULL,
-[_sourceAssessmentKey] [int] NULL
+[_sourceStudentKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceTimeKey] [date] NULL,
+[_sourceAssessmentKey] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Staging].[StudentAssessmentScore] ADD CONSTRAINT [PK_StagingStudentAssessmentScore] PRIMARY KEY CLUSTERED  ([StudentAssessmentScoreKey]) ON [PRIMARY]

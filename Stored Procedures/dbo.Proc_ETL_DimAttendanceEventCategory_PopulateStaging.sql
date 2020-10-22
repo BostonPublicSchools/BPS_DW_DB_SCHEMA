@@ -26,8 +26,6 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
-
 		TRUNCATE TABLE Staging.AttendanceEventCategory
 		INSERT INTO Staging.AttendanceEventCategory
 				   ([_sourceKey]
@@ -69,9 +67,8 @@ BEGIN
 		WHERE d.Namespace IN ('http://ed-fi.org/Descriptor/AttendanceEventCategoryDescriptor.xml',
 		                      'http://ed-fi.org/Descriptor/Follett/Aspen/AttendanceEventCategoryDescriptor.xml')	
 			  AND (d.LastModifiedDate > @LastLoadDate AND d.LastModifiedDate <= @NewLoadDate);
-
 		
-		COMMIT TRANSACTION;		
+			
 	END TRY
 	BEGIN CATCH
 		
@@ -94,18 +91,7 @@ BEGIN
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
 		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

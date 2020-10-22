@@ -26,8 +26,7 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
-
+		
 		TRUNCATE TABLE Staging.DisciplineIncident
 		INSERT INTO Staging.DisciplineIncident
 				   (_sourceKey
@@ -117,9 +116,7 @@ BEGIN
 		    (
 			  	(di.LastModifiedDate > @LastLoadDate AND di.LastModifiedDate <= @NewLoadDate)
 			)
-
-			
-							
+													
 			
 		--loading legacy data if it has not been loaded.
 		--load types are ignored as this data will only be loaded once.
@@ -200,7 +197,7 @@ BEGIN
 				WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  > '2015-09-01'
 			END
 
-		COMMIT TRANSACTION;		
+			
 	END TRY
 	BEGIN CATCH
 		
@@ -222,19 +219,7 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

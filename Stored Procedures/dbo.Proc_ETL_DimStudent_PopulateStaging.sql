@@ -27,7 +27,7 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
+		--BEGIN TRANSACTION;   
 
 		TRUNCATE TABLE Staging.[Student]
 
@@ -86,12 +86,13 @@ BEGIN
 				   0	             
 			   END AS Race_Other_Indicator into #StudentRaces    
 
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s 
+		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s
 			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr ON s.StudentUSI = sr.StudentUSI		
 			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.RaceType rt ON sr.RaceTypeId = rt.RaceTypeId
-	    WHERE (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) OR
-			  (rt.LastModifiedDate > @LastLoadDate AND rt.LastModifiedDate <= @NewLoadDate)
+	    WHERE (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) --OR
+			  --(rt.LastModifiedDate > @LastLoadDate AND rt.LastModifiedDate <= @NewLoadDate)
 		GROUP BY s.StudentUSI, s.HispanicLatinoEthnicity
+				
 				
 		--;WITH StudentHomeRooomByYear AS
 		--(
@@ -99,20 +100,25 @@ BEGIN
 							std_sa.SchoolYear, 
 							std_sa.SchoolId,  
 							std_sa.ClassroomIdentificationCode AS HomeRoom,
-							dbo.Func_ETL_GetFullName(staff.FirstName,staff.MiddleName,staff.LastSurname) AS HomeRoomTeacher  INTO #StudentHomeRooomByYear
-			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation std_sa 
+							dbo.Func_ETL_GetFullName(staff.FirstName,staff.MiddleName,staff.LastSurname) AS HomeRoomTeacher,
+							ROW_NUMBER() OVER (PARTITION BY std_sa.StudentUSI, 
+															std_sa.SchoolYear, 
+															std_sa.SchoolId ORDER BY staff_sa.BeginDate DESC) AS RowRankId INTO #StudentHomeRooomByYear
+			FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s
+			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation std_sa ON s.StudentUSI = std_sa.StudentUSI			
 				 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa  ON std_sa.UniqueSectionCode = staff_sa.UniqueSectionCode
 																										AND std_sa.SchoolYear = staff_sa.SchoolYear
 				 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Staff staff on staff_sa.StaffUSI = staff.StaffUSI
 			WHERE std_sa.HomeroomIndicator = 1
 				 AND std_sa.SchoolYear >= 2019
+				 AND std_sa.EndDate > GETDATE()
+				 --AND s.StudentUniqueId = 269159 
 				 AND (
-				       (staff_sa.LastModifiedDate > @LastLoadDate AND staff_sa.LastModifiedDate <= @NewLoadDate) OR
-			           (staff.LastModifiedDate > @LastLoadDate AND staff.LastModifiedDate <= @NewLoadDate)
+				       (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) 
 				     )
 					 
         --)
-
+		
 		INSERT INTO Staging.[Student]
 				   ([_sourceKey]
 				   ,[PrimaryElectronicMailAddress]
@@ -200,9 +206,9 @@ BEGIN
 			   DATEDIFF(YEAR, s.BirthDate, GetDate()) AS StudentAge,
 			   ssa.GraduationSchoolYear,
 
-			   shrby.Homeroom,
-			   shrby.HomeroomTeacher,
-
+			   COALESCE(shrby.Homeroom,'N/A') AS Homeroom,
+			   COALESCE(shrby.HomeroomTeacher,'N/A') AS HomerHomeroomTeacheroom,
+			   
 			   CASE 
 					WHEN sex.CodeValue  = 'Male' THEN 'M'
 					WHEN sex.CodeValue  = 'Female' THEN 'F'
@@ -276,7 +282,7 @@ BEGIN
 			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(s.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolCategoryModifiedDate,
 			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(ssa.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolTitle1StatusModifiedDate,
 
-				--Making sure the first time, the ValidFrom is set to beginning of time 
+				
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
                              (VALUES
@@ -293,10 +299,7 @@ BEGIN
 		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s
 			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa ON s.StudentUSI = ssa.StudentUSI
 			INNER JOIN dbo.DimSchool dschool ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),ssa.SchoolId)   = dschool._sourceKey
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor gld  ON ssa.EntryGradeLevelDescriptorId = gld.DescriptorId
-			LEFT JOIN #StudentHomeRooomByYear shrby ON  s.StudentUSI = shrby.StudentUSI
-												   AND ssa.SchoolId = shrby.SchoolId
-												   AND ssa.SchoolYear = shrby.SchoolYear
+			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor gld  ON ssa.EntryGradeLevelDescriptorId = gld.DescriptorId			
 			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EntryGradeLevelReasonType eglrt ON ssa.EntryGradeLevelReasonTypeId = eglrt.EntryGradeLevelReasonTypeId
 			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ExitWithdrawTypeDescriptor ewtd ON ssa.ExitWithdrawTypeDescriptorId = ewtd.ExitWithdrawTypeDescriptorId
 			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor ewtdd ON ewtd.ExitWithdrawTypeDescriptorId = ewtdd.DescriptorId
@@ -318,11 +321,17 @@ BEGIN
 	
 			--races
 			LEFT JOIN #StudentRaces sr ON s.StudentUSI = sr.StudentUsi
+			
+			--homeroom
+			LEFT JOIN #StudentHomeRooomByYear shrby ON  s.StudentUSI = shrby.StudentUSI
+												   AND ssa.SchoolId = shrby.SchoolId
+												   AND ssa.SchoolYear = shrby.SchoolYear
+												   AND shrby.RowRankId = 1
 	
 		WHERE ssa.SchoolYear >= 2019 AND
 		     (
-			   (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) OR
-			   (ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)			 
+			   (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) --OR
+			   --(ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)			 
 			 )
 			 
 		DROP TABLE #StudentRaces, #StudentHomeRooomByYear;
@@ -546,7 +555,7 @@ BEGIN
 
 			END
 
-		COMMIT TRANSACTION;		
+		--COMMIT TRANSACTION;		
 	END TRY
 	BEGIN CATCH
 		
@@ -568,19 +577,19 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
+		---- Test whether the transaction is uncommittable.
+		--IF XACT_STATE( ) = -1
+		--	BEGIN
+		--		--The transaction is in an uncommittable state. Rolling back transaction
+		--		ROLLBACK TRANSACTION;
+		--	END;
 
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		---- Test whether the transaction is committable.
+		--IF XACT_STATE( ) = 1
+		--	BEGIN
+		--		--The transaction is committable. Committing transaction
+		--		COMMIT TRANSACTION;
+		--	END;
 	END CATCH;
 END;
 GO

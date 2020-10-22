@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 --Fact StudentDiscipline
 ----------------------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_FactStudentDiscipline_PopulateStaging] 
@@ -25,78 +26,45 @@ BEGIN
 
 
 	BEGIN TRY
-
-		BEGIN TRANSACTION;   
-		SELECT 1;
-		/*
-		TRUNCATE TABLE Staging.StudentAttendanceByDay
-		INSERT INTO Staging.StudentAttendanceByDay
+    
+		--DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
+		TRUNCATE TABLE Staging.StudentDiscipline
+			
+		INSERT INTO Staging.StudentDiscipline
 		(
 		    _sourceKey,
 		    StudentKey,
 		    TimeKey,
 		    SchoolKey,
-		    AttendanceEventCategoryKey,
-		    AttendanceEventReason,
+		    DisciplineIncidentKey,
 		    ModifiedDate,
 		    _sourceStudentKey,
 		    _sourceTimeKey,
 		    _sourceSchoolKey,
-		    _sourceAttendanceEventCategoryKey
+		    _sourceDisciplineIncidentKey
 		)
 		
-		
-        --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT DISTINCT 
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),c.CourseCode)) AS [_sourceKey],
-			   c.CourseCode,
-			   c.CourseTitle,
-			   c.CourseDescription,
-			   COALESCE(clct.CodeValue,'N/A') AS [CourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   COALESCE(clct.[Description],'N/A') AS [CourseLevelCharacteristicTypeDescriptor_Descriptor],
+		       CONCAT_WS('|',Convert(NVARCHAR(MAX),sdia.StudentUSI),di.IncidentIdentifier) AS _sourceKey,
+			   NULL AS StudentKey,
+			   NULL AS TimeKey,	  
+			   NULL AS SchoolKey,  
+			   NULL AS DisciplineIncidentKey,  
+			   di.IncidentDate AS ModifiedDate,
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sdia.StudentUSI)) AS _sourceStudentKey,
+		       di.IncidentDate AS _sourceTimeKey,		          
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),di.SchoolId))  AS _sourceSchoolKey,
+		       CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),di.IncidentIdentifier))  AS  _sourceDisciplineIncidentKey
 
-			   COALESCE(ast.CodeValue,'N/A') AS [AcademicSubjectDescriptor_CodeValue],
-			   COALESCE(ast.[Description],'N/A') AS [AcademicSubjectDescriptor_Descriptor],
-			   COALESCE(c.HighSchoolCourseRequirement,0) AS [HighSchoolCourseRequirement_Indicator],
-
-			   c.MinimumAvailableCredits,
-			   c.MaximumAvailableCredits,
-			   COALESCE(cgat.CodeValue,'N/A')  AS GPAApplicabilityType_CodeValue,
-			   COALESCE(cgat.[Description],'N/A') AS GPAApplicabilityType_Description,
-	   
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_Description],
-			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(c.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS CourseModifiedDate,
-
-				--Making sure the first time, the ValidFrom is set to beginning of time 
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
-				           (SELECT MAX(t) FROM
-                             (VALUES
-                               (c.LastModifiedDate)                                               
-                             ) AS [MaxLastModifiedDate](t)
-                           )
-					ELSE 
-					      '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
-				END AS ValidFrom,
-			   '12/31/9999' as ValidTo,
-				1 AS IsCurrent
-		--select *
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristicType clct ON clc.CourseLevelCharacteristicTypeId = clct.CourseLevelCharacteristicTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AcademicSubjectType ast ON c.AcademicSubjectDescriptorId = ast.AcademicSubjectTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseGPAApplicabilityType cgat ON c.CourseGPAApplicabilityTypeId = cgat.CourseGPAApplicabilityTypeId
-		WHERE EXISTS (SELECT 1 
-					  FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co 
-					  WHERE c.CourseCode = co.CourseCode
-						AND co.SchoolYear IN (2019,2020)) AND
-			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
-			
-		 */				
-			
-		
-
-		COMMIT TRANSACTION;		
+		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
+			  INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentDisciplineIncidentAssociation sdia ON di.IncidentIdentifier = sdia.IncidentIdentifier
+		WHERE di.IncidentDate >= '07/01/2018'	  
+		 AND  (
+		       (di.LastModifiedDate > @LastLoadDate  AND di.LastModifiedDate <= @NewLoadDate)
+			     OR
+		       (sdia.LastModifiedDate > @LastLoadDate  AND sdia.LastModifiedDate <= @NewLoadDate)
+			  )
+		 
 	END TRY
 	BEGIN CATCH
 		
@@ -113,24 +81,7 @@ BEGIN
 		
 		PRINT CONCAT('An error had ocurred executing SP:',OBJECT_NAME(@@PROCID),'. Error details: ', @errorMessage);
 		
-		-- Test XACT_STATE:
-		-- If  1, the transaction is committable.
-		-- If -1, the transaction is uncommittable and should be rolled back.
-		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
-
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

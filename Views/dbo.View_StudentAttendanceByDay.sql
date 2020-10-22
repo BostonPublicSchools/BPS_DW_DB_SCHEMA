@@ -9,7 +9,7 @@ AS(
     SELECT  sabd.StudentKey,
 	        sabd.TimeKey,
 			sabd.SchoolKey,
-
+			sabd.AttendanceEventCategoryKey,
 		    ds.StudentUniqueId AS StudentId,
 			ds.StateId AS StudentStateId,
 			ds.FirstName,
@@ -78,5 +78,5 @@ AS(
 );
 GO
 
-CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [SchoolKey], [TimeKey]) ON [PRIMARY]
+CREATE UNIQUE CLUSTERED INDEX [CLU_View_StudentAttendanceByDay] ON [dbo].[View_StudentAttendanceByDay] ([StudentKey], [SchoolKey], [TimeKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
 GO

@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 --Fact StudentCourseTranscript
 ----------------------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_FactStudentCourseTranscript_PopulateStaging] 
@@ -26,77 +27,53 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
-		SELECT 1;
-		/*
-		TRUNCATE TABLE Staging.StudentAttendanceByDay
-		INSERT INTO Staging.StudentAttendanceByDay
+		--DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
+		--select * from Staging.StudentCourseTranscript
+		TRUNCATE TABLE Staging.StudentCourseTranscript	
+		INSERT INTO Staging.StudentCourseTranscript
 		(
 		    _sourceKey,
 		    StudentKey,
 		    TimeKey,
+		    CourseKey,
 		    SchoolKey,
-		    AttendanceEventCategoryKey,
-		    AttendanceEventReason,
+		    EarnedCredits,
+		    PossibleCredits,
+		    FinalLetterGradeEarned,
+		    FinalNumericGradeEarned,
 		    ModifiedDate,
 		    _sourceStudentKey,
-		    _sourceTimeKey,
-		    _sourceSchoolKey,
-		    _sourceAttendanceEventCategoryKey
+		    _sourceSchoolYear,
+			_sourceTerm,
+		    _sourceCourseKey,
+		    _sourceSchoolKey
 		)
 		
+		SELECT DISTINCT
+			   CONCAT_WS('|',Convert(NVARCHAR(MAX),ct.StudentUSI),Convert(NVARCHAR(MAX),ct.SchoolYear),Convert(NVARCHAR(MAX),ct.SchoolId),Convert(NVARCHAR(MAX),ct.CourseCode),td.CodeValue) AS _sourceKey,
+			   NULL AS StudentKey,
+			   NULL AS TimeKey,	  
+			   NULL AS CourseKey,
+			   NULL AS SchoolKey,  
+			   ct.EarnedCredits,
+			   ct.AttemptedCredits,
+			   ct.FinalLetterGradeEarned,
+			   ct.FinalNumericGradeEarned,			   
+			   ct.LastModifiedDate AS ModifiedDate,
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ct.StudentUSI)) AS _sourceStudentKey,
+		       ct.SchoolYear AS _sourceSchoolYear,		          
+			   td.CodeValue AS _sourceTerm,		          
+			   CONCAT_WS('|','Ed-Fi',ct.CourseCode)  AS _sourceCourseKey,
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ct.SchoolId))  AS _sourceSchoolKey
+		--select *  
+		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseTranscript ct
+			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor td ON ct.TermDescriptorId = td.DescriptorId
+		WHERE  			
+			  ct.SchoolYear >= 2019			
+			 AND  (
+					   (ct.LastModifiedDate > @LastLoadDate  AND ct.LastModifiedDate <= @NewLoadDate)			     
+				  )
 		
-        --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
-		SELECT DISTINCT 
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),c.CourseCode)) AS [_sourceKey],
-			   c.CourseCode,
-			   c.CourseTitle,
-			   c.CourseDescription,
-			   COALESCE(clct.CodeValue,'N/A') AS [CourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   COALESCE(clct.[Description],'N/A') AS [CourseLevelCharacteristicTypeDescriptor_Descriptor],
-
-			   COALESCE(ast.CodeValue,'N/A') AS [AcademicSubjectDescriptor_CodeValue],
-			   COALESCE(ast.[Description],'N/A') AS [AcademicSubjectDescriptor_Descriptor],
-			   COALESCE(c.HighSchoolCourseRequirement,0) AS [HighSchoolCourseRequirement_Indicator],
-
-			   c.MinimumAvailableCredits,
-			   c.MaximumAvailableCredits,
-			   COALESCE(cgat.CodeValue,'N/A')  AS GPAApplicabilityType_CodeValue,
-			   COALESCE(cgat.[Description],'N/A') AS GPAApplicabilityType_Description,
-	   
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_Description],
-			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(c.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS CourseModifiedDate,
-
-				--Making sure the first time, the ValidFrom is set to beginning of time 
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
-				           (SELECT MAX(t) FROM
-                             (VALUES
-                               (c.LastModifiedDate)                                               
-                             ) AS [MaxLastModifiedDate](t)
-                           )
-					ELSE 
-					      '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
-				END AS ValidFrom,
-			   '12/31/9999' as ValidTo,
-				1 AS IsCurrent
-		--select *
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristicType clct ON clc.CourseLevelCharacteristicTypeId = clct.CourseLevelCharacteristicTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AcademicSubjectType ast ON c.AcademicSubjectDescriptorId = ast.AcademicSubjectTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseGPAApplicabilityType cgat ON c.CourseGPAApplicabilityTypeId = cgat.CourseGPAApplicabilityTypeId
-		WHERE EXISTS (SELECT 1 
-					  FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co 
-					  WHERE c.CourseCode = co.CourseCode
-						AND co.SchoolYear IN (2019,2020)) AND
-			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
-			
-		 */				
-			
-		
-
-		COMMIT TRANSACTION;		
 	END TRY
 	BEGIN CATCH
 		
@@ -118,19 +95,6 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
 	END CATCH;
 END; 
 GO

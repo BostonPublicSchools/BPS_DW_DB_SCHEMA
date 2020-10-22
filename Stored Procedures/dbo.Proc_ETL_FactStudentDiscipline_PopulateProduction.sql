@@ -25,111 +25,119 @@ BEGIN
 	    
 		BEGIN TRANSACTION;   
 		 
-		--dropping the columnstore index
-		--DROP INDEX IF EXISTS CSI_FactStudentAttendanceByDay ON dbo.FactStudentAttendanceByDay;
-      
-	    --updating staging keys
+		--updating staging keys
+		UPDATE s 
+		SET s.StudentKey = (
+								SELECT TOP (1) ds.StudentKey
+								FROM dbo.DimStudent ds
+								WHERE s._sourceStudentKey = ds._sourceKey									
+									AND s.[ModifiedDate] >= ds.[ValidFrom]
+									AND s.[ModifiedDate] < ds.[ValidTo]
+								ORDER BY ds.[ValidFrom]
+							),
+			s.TimeKey = (
+							SELECT TOP (1) dt.TimeKey
+							FROM dbo.DimTime dt
+									INNER JOIN dbo.DimSchool ds ON dt.SchoolKey = ds.SchoolKey
+							WHERE s._sourceSchoolKey = ds._sourceKey
+								AND s._sourceTimeKey = dt.SchoolDate
+							ORDER BY dt.SchoolDate
+						),
+			s.SchoolKey = (
+								SELECT TOP (1) ds.SchoolKey
+								FROM dbo.DimSchool ds
+								WHERE s._sourceSchoolKey = ds._sourceKey									
+									AND s.[ModifiedDate] >= ds.[ValidFrom]
+									AND s.[ModifiedDate] < ds.[ValidTo]
+								ORDER BY ds.[ValidFrom]
+							),		
+			s.DisciplineIncidentKey =(
+										SELECT TOP (1) ddi.DisciplineIncidentKey
+										FROM dbo.DimDisciplineIncident ddi
+										WHERE s._sourceDisciplineIncidentKey = ddi._sourceKey									
+											AND s.[ModifiedDate] >= ddi.[ValidFrom]
+											AND s.[ModifiedDate] < ddi.[ValidTo]
+										ORDER BY ddi.[ValidFrom]
+									)  
+										             
+        FROM Staging.StudentDiscipline s;
+		
+		DELETE FROM Staging.StudentDiscipline
+		WHERE StudentKey IS NULL OR 
+		      TimeKey IS NULL OR
+			  SchoolKey IS NULL OR
+			  DisciplineIncidentKey IS NULL;
 
-		/*
+		--dropping the columnstore index
+        DROP INDEX IF EXISTS CSI_FactStudentDiscipline ON dbo.FactStudentDiscipline;
+	    
 		--deleting changed records
 		DELETE prod
-		FROM [dbo].FactStudentAttendanceByDay AS prod
+		FROM [dbo].[FactStudentDiscipline] AS prod
 		WHERE EXISTS (SELECT 1 
-		              FROM [Staging].StudentAttendanceByDay stage
-					  WHERE prod._sourceAttendanceEvent = stage._sourceAttendanceEvent);
-	    
-		
-		INSERT INTO dbo.FactStudentAttendanceByDay
-		(
+		              FROM [Staging].StudentDiscipline stage
+					  WHERE prod._sourceKey = stage._sourceKey)
+
+
+
+		INSERT INTO [dbo].[FactStudentDiscipline]
+		   		([_sourceKey]
+				,[StudentKey]
+		   		,[TimeKey]
+		   		,[SchoolKey]
+		   		,[DisciplineIncidentKey]           
+		   		,[LineageKey])
+		SELECT DISTINCT 
+		    _sourceKey,
 		    StudentKey,
-		    TimeKey,
-		    SchoolKey,
-		    AttendanceEventCategoryKey,
-		    AttendanceEventReason,
-		    LineageKey
-		)
-		SELECT 
-		    StudentKey,
-		    TimeKey,
-		    SchoolKey,
-		    AttendanceEventCategoryKey,
-		    AttendanceEventReason,
-			@LineageKey		
-		FROM Staging.StudentAttendanceByDay
-		*/
+		   	TimeKey,
+		   	SchoolKey,	   
+		   	DisciplineIncidentKey,	   
+		   	@lineageKey AS LineageKey
+		FROM Staging.StudentDiscipline
 
-		IF NOT exists ( SELECT 1 FROM dbo.FactStudentDiscipline)
-		BEGIN
-		   DROP INDEX IF EXISTS CSI_FactStudentDiscipline ON dbo.FactStudentDiscipline;
-		   		   	   
-		   INSERT INTO [dbo].[FactStudentDiscipline]
-		   			([_sourceKey]
-					,[StudentKey]
-		   			,[TimeKey]
-		   			,[SchoolKey]
-		   			,[DisciplineIncidentKey]           
-		   			,[LineageKey])
-		   
-		   SELECT DISTINCT 
-		       'EdFi',
-		   		ds.StudentKey,
-		   		dt.TimeKey,
-		   		dschool.SchoolKey,	   
-		   		d_di.[DisciplineIncidentKey],	   
-		   		@lineageKey AS LineageKey
-		   FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
-		   		INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentDisciplineIncidentAssociation sdia ON di.IncidentIdentifier = sdia.IncidentIdentifier
-		   		INNER JOIN dbo.DimSchool dschool ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),di.SchoolId)   = dschool._sourceKey
-		   												AND di.IncidentDate BETWEEN dschool.ValidFrom AND dschool.ValidTo
-		   		INNER JOIN dbo.DimTime dt ON di.IncidentDate = dt.SchoolDate
-		   												AND dt.SchoolKey is not null   
-		   	                 							AND dschool.SchoolKey = dt.SchoolKey
-		   		INNER JOIN dbo.DimStudent ds  ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),sdia.StudentUSI)   = ds._sourceKey
-		   											AND di.IncidentDate BETWEEN ds.ValidFrom AND ds.ValidTo
-	  	   
-		   		INNER JOIN dbo.DimDisciplineIncident d_di ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),di.IncidentIdentifier)   = d_di._sourceKey
 
-			--legacy 			
-			INSERT INTO [dbo].[FactStudentDiscipline]
-					   ([_sourceKey]
-					    ,[StudentKey]
-					   ,[TimeKey]
-					   ,[SchoolKey]
-					   ,[DisciplineIncidentKey]           
-					   ,[LineageKey])
+		--loading from legacy dw just once
+		IF (NOT EXISTS(SELECT 1  
+		               FROM dbo.FactStudentDiscipline 
+		               WHERE _sourceKey = 'LegacyDW'))
+             BEGIN					
+					INSERT INTO [dbo].[FactStudentDiscipline]
+							   ([_sourceKey]
+								,[StudentKey]
+							   ,[TimeKey]
+							   ,[SchoolKey]
+							   ,[DisciplineIncidentKey]           
+							   ,[LineageKey])
 
-			SELECT DISTINCT 
-			       'LegacyDW',
-				   ds.StudentKey,
-				   dt.TimeKey,
-				   dschool.SchoolKey,	   
-				   d_di.[DisciplineIncidentKey],	   
-				   @lineageKey AS LineageKey
-			FROM  [Raw_LegacyDW].[DisciplineIncidents] di    
-				  INNER JOIN dbo.DimStudent ds  ON CONCAT_WS('|', 'LegacyDW', Convert(NVARCHAR(MAX),di.BPS_Student_ID))   = ds._sourceKey
-													 AND	 di.CND_INCIDENT_DATE BETWEEN ds.ValidFrom AND ds.ValidTo
-				  INNER JOIN dbo.DimSchool dschool ON CONCAT_WS('|', 'Ed-Fi', Convert(NVARCHAR(MAX),di.[SKL_SCHOOL_ID]))   = dschool._sourceKey 
-													 AND	 di.CND_INCIDENT_DATE BETWEEN dschool.ValidFrom AND dschool.ValidTo
-				  INNER JOIN dbo.DimTime dt ON di.CND_INCIDENT_DATE = dt.SchoolDate
-												  AND dt.SchoolKey is not null   
-												  AND dschool.SchoolKey = dt.SchoolKey
-				  INNER JOIN dbo.DimDisciplineIncident d_di ON CONCAT_WS('|','LegacyDW',Convert(NVARCHAR(MAX),di.CND_INCIDENT_ID))    = d_di._sourceKey
-			WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  > '2015-09-01'
-			--re-creating the columnstore index
-			CREATE COLUMNSTORE INDEX CSI_FactStudentDiscipline
-				  ON dbo.FactStudentDiscipline
-				  ([StudentKey]
-				  ,[TimeKey]
-				  ,[SchoolKey]
-				  ,[DisciplineIncidentKey]
-				  ,[LineageKey])
+					SELECT DISTINCT 
+						   'LegacyDW',
+						   ds.StudentKey,
+						   dt.TimeKey,
+						   dschool.SchoolKey,	   
+						   d_di.[DisciplineIncidentKey],	   
+						   @lineageKey AS LineageKey
+					FROM  [Raw_LegacyDW].[DisciplineIncidents] di    
+						  INNER JOIN dbo.DimStudent ds  ON CONCAT_WS('|', 'LegacyDW', Convert(NVARCHAR(MAX),di.BPS_Student_ID))   = ds._sourceKey
+															 AND	 di.CND_INCIDENT_DATE BETWEEN ds.ValidFrom AND ds.ValidTo
+						  INNER JOIN dbo.DimSchool dschool ON CONCAT_WS('|', 'Ed-Fi', Convert(NVARCHAR(MAX),di.[SKL_SCHOOL_ID]))   = dschool._sourceKey 
+															 AND	 di.CND_INCIDENT_DATE BETWEEN dschool.ValidFrom AND dschool.ValidTo
+						  INNER JOIN dbo.DimTime dt ON di.CND_INCIDENT_DATE = dt.SchoolDate
+														  AND dt.SchoolKey is not null   
+														  AND dschool.SchoolKey = dt.SchoolKey
+						  INNER JOIN dbo.DimDisciplineIncident d_di ON CONCAT_WS('|','LegacyDW',Convert(NVARCHAR(MAX),di.CND_INCIDENT_ID))    = d_di._sourceKey
+					WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  > '2015-09-01'
+			 END;
 
-			
-
-        END;
-
-		
-
+        --re-creating the columnstore index
+		CREATE COLUMNSTORE INDEX CSI_FactStudentDiscipline
+				ON dbo.FactStudentDiscipline
+				([StudentKey]
+				,[TimeKey]
+				,[SchoolKey]
+				,[DisciplineIncidentKey]
+				,[LineageKey])
+				
 
 		-- updating the EndTime to now and status to Success		
 		UPDATE dbo.ETL_Lineage

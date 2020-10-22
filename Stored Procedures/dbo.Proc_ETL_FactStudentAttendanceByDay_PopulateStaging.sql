@@ -26,11 +26,101 @@ BEGIN
 
 
 	BEGIN TRY
+	
+		--DECLARE @LastLoadDate datetime= '07/01/2015' DECLARE @NewLoadDate datetime = GETDATE()
+		TRUNCATE TABLE Staging.StudentAttendanceByDay	
+		CREATE TABLE #StudentsToBeProcessed (StudentUSI INT, 
+		                                     EventDate DATE ,
+											 LastModifiedDate DATETIME )
+		  
+		CREATE TABLE #AttedanceEventRankedByReason (StudentUSI INT, 
+		                                            SchoolId INT, 
+													SchoolYear SMALLINT, 
+													EventDate DATE, 
+													LastModifiedDate DATETIME,
+													AttendanceEventCategoryDescriptorId INT,
+													AttendanceEventReason NVARCHAR(max) , 
+													RowId INT  )
+	    CREATE TABLE #DistinctAttedanceEvents (StudentUSI INT, 
+		                                       SchoolId INT, 
+											   SchoolYear SMALLINT, 
+											   EventDate DATE, 
+											   LastModifiedDate DATETIME,
+											   AttendanceEventCategoryDescriptorId INT,
+											   AttendanceEventReason NVARCHAR(max))
+	
+		CREATE NONCLUSTERED INDEX [#AttedanceEventRankedByReason_MainCovering]
+		ON [dbo].[#AttedanceEventRankedByReason] ([StudentUSI],[SchoolId],[EventDate],[RowId])
+		INCLUDE ([AttendanceEventCategoryDescriptorId],[AttendanceEventReason])
 
-		BEGIN TRANSACTION;   
-		SELECT 1;
-		/*
-		TRUNCATE TABLE Staging.StudentAttendanceByDay
+
+		INSERT INTO #DistinctAttedanceEvents
+		(
+		    StudentUSI,
+		    SchoolId,
+		    SchoolYear,
+		    EventDate,
+			LastModifiedDate,
+		    AttendanceEventCategoryDescriptorId,
+		    AttendanceEventReason
+		)
+		SELECT   DISTINCT 
+					StudentUSI, 
+					SchoolId, 
+					SchoolYear, 
+					EventDate,
+					LastModifiedDate,
+					AttendanceEventCategoryDescriptorId,					
+					LTRIM(RTRIM(COALESCE(AttendanceEventReason,''))) AS AttendanceEventReason 
+		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAttendanceEvent
+		WHERE SchoolYear >= 2019
+			AND (LastModifiedDate > @LastLoadDate  AND LastModifiedDate <= @NewLoadDate)
+		
+
+		INSERT INTO #AttedanceEventRankedByReason
+		(
+			StudentUSI,
+			SchoolId,
+			SchoolYear,
+			EventDate,
+			LastModifiedDate,
+			AttendanceEventCategoryDescriptorId,
+			AttendanceEventReason,
+			RowId
+		)
+		SELECT DISTINCT  
+		            StudentUSI, 
+					SchoolId, 
+					SchoolYear, 
+					EventDate,
+					LastModifiedDate,
+					AttendanceEventCategoryDescriptorId,
+					AttendanceEventReason , 
+					ROW_NUMBER() OVER (PARTITION BY StudentUSI, 
+													SchoolId, 
+													SchoolYear, 
+													EventDate,
+													AttendanceEventCategoryDescriptorId
+										ORDER BY AttendanceEventReason DESC) AS RowId 
+			FROM #DistinctAttedanceEvents
+
+			
+		IF (@LastLoadDate <> '07/01/2015')
+			BEGIN
+				INSERT INTO #StudentsToBeProcessed (StudentUSI, EventDate, LastModifiedDate)
+				SELECT DISTINCT StudentUSI, EventDate, LastModifiedDate
+				FROM #DistinctAttedanceEvents
+			END
+	    ELSE --this first time all students will be processed
+			BEGIN
+				INSERT INTO #StudentsToBeProcessed (StudentUSI, EventDate, LastModifiedDate)
+				SELECT DISTINCT StudentUSI, NULL AS EventDate, NULL AS LastModifiedDate --we don't care about event changes the first this runs. 
+				FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation
+				WHERE SchoolYear >= 2019
+			END;
+		
+		
+		
 		INSERT INTO Staging.StudentAttendanceByDay
 		(
 		    _sourceKey,
@@ -44,60 +134,48 @@ BEGIN
 		    _sourceTimeKey,
 		    _sourceSchoolKey,
 		    _sourceAttendanceEventCategoryKey
-		)
-		
-		
-        --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
-		SELECT DISTINCT 
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),c.CourseCode)) AS [_sourceKey],
-			   c.CourseCode,
-			   c.CourseTitle,
-			   c.CourseDescription,
-			   COALESCE(clct.CodeValue,'N/A') AS [CourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   COALESCE(clct.[Description],'N/A') AS [CourseLevelCharacteristicTypeDescriptor_Descriptor],
-
-			   COALESCE(ast.CodeValue,'N/A') AS [AcademicSubjectDescriptor_CodeValue],
-			   COALESCE(ast.[Description],'N/A') AS [AcademicSubjectDescriptor_Descriptor],
-			   COALESCE(c.HighSchoolCourseRequirement,0) AS [HighSchoolCourseRequirement_Indicator],
-
-			   c.MinimumAvailableCredits,
-			   c.MaximumAvailableCredits,
-			   COALESCE(cgat.CodeValue,'N/A')  AS GPAApplicabilityType_CodeValue,
-			   COALESCE(cgat.[Description],'N/A') AS GPAApplicabilityType_Description,
-	   
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_Description],
-			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(c.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS CourseModifiedDate,
-
-				--Making sure the first time, the ValidFrom is set to beginning of time 
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
-				           (SELECT MAX(t) FROM
-                             (VALUES
-                               (c.LastModifiedDate)                                               
-                             ) AS [MaxLastModifiedDate](t)
-                           )
-					ELSE 
-					      '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
-				END AS ValidFrom,
-			   '12/31/9999' as ValidTo,
-				1 AS IsCurrent
-		--select *
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristicType clct ON clc.CourseLevelCharacteristicTypeId = clct.CourseLevelCharacteristicTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AcademicSubjectType ast ON c.AcademicSubjectDescriptorId = ast.AcademicSubjectTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseGPAApplicabilityType cgat ON c.CourseGPAApplicabilityTypeId = cgat.CourseGPAApplicabilityTypeId
-		WHERE EXISTS (SELECT 1 
-					  FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co 
-					  WHERE c.CourseCode = co.CourseCode
-						AND co.SchoolYear IN (2019,2020)) AND
-			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
+		)	
+		SELECT DISTINCT         
+				  CONCAT_WS('|',Convert(NVARCHAR(MAX),ssa.StudentUSI),CONVERT(CHAR(10), cdce.Date, 101)) AS _sourceKey,
+				  NULL AS StudentKey,
+				  NULL AS TimeKey,	  
+				  NULL AS SchoolKey,  
+				  NULL AS AttendanceEventCategoryKey,				  
+				  ISNULL(ssae.AttendanceEventReason,'') AS AttendanceEventReason,
+				  --stbp.LastModifiedDate only makes sense when identifying deltas, the first time we just follow the calendar date
+				  cdce.Date AS ModifiedDate,
+				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StudentUSI)) AS _sourceStudentKey,
+		          cdce.Date AS _sourceTimeKey,		          
+				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.SchoolId))  AS _sourceSchoolKey,
+		          CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),ssae.AttendanceEventCategoryDescriptorId))  AS _sourceAttendanceEventCategoryKey
+				  				  
+			--select *  
+			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa 
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDate cda on ssa.SchoolId = cda.SchoolId 														   
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce on cda.Date=cdce.Date 
+																					 and cda.SchoolId=cdce.SchoolId
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_cdce on cdce.CalendarEventDescriptorId = d_cdce.DescriptorId
+																	  and d_cdce.CodeValue='Instructional day' -- ONLY Instructional days
+	            INNER JOIN  #StudentsToBeProcessed stbp ON ssa.StudentUSI = stbp.StudentUSI
+				                                      AND (stbp.EventDate IS NULL OR 
+													       cdce.Date = stbp.EventDate)
+				LEFT JOIN #AttedanceEventRankedByReason ssae on ssa.StudentUSI = ssae.StudentUSI
+															   AND ssa.SchoolId = ssae.SchoolId 
+															   AND cda.Date = ssae.EventDate
+															   AND ssae.RowId= 1			
+			WHERE  cdce.Date >= ssa.EntryDate 
+			   AND cdce.Date <= GETDATE()
+			   AND (
+					 (ssa.ExitWithdrawDate is null) 
+					  OR
+					 (ssa.ExitWithdrawDate is not null and cdce.Date<=ssa.ExitWithdrawDate) 
+				   )
+				AND ssa.SchoolYear >= 2019
+				
+			DROP TABLE #StudentsToBeProcessed, #AttedanceEventRankedByReason, #DistinctAttedanceEvents;
 			
-		 */				
 			
 		
-
-		COMMIT TRANSACTION;		
 	END TRY
 	BEGIN CATCH
 		
@@ -114,24 +192,7 @@ BEGIN
 		
 		PRINT CONCAT('An error had ocurred executing SP:',OBJECT_NAME(@@PROCID),'. Error details: ', @errorMessage);
 		
-		-- Test XACT_STATE:
-		-- If  1, the transaction is committable.
-		-- If -1, the transaction is uncommittable and should be rolled back.
-		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
-
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

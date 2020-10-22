@@ -74,7 +74,8 @@ BEGIN
 			INNER JOIN Staging.AttendanceEventCategory AS stage ON prod._sourceKey = stage._sourceKey
 		WHERE prod.ValidTo = '12/31/9999'
 
-
+		SELECT * FROM dbo.DimAttendanceEventCategory
+           
 		INSERT INTO dbo.DimAttendanceEventCategory
            ([_sourceKey]
            ,[AttendanceEventCategoryDescriptor_CodeValue]

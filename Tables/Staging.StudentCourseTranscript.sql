@@ -11,10 +11,11 @@ CREATE TABLE [Staging].[StudentCourseTranscript]
 [FinalLetterGradeEarned] [nvarchar] (10) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [FinalNumericGradeEarned] [decimal] (9, 2) NULL,
 [ModifiedDate] [datetime] NULL,
-[_sourceTimeKey] [int] NULL,
-[_sourceCourseKey] [int] NULL,
-[_sourceSchoolKey] [int] NULL,
-[_sourceEarnedCredits] [int] NOT NULL
+[_sourceStudentKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceSchoolYear] [int] NULL,
+[_sourceTerm] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceCourseKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceSchoolKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Staging].[StudentCourseTranscript] ADD CONSTRAINT [PK_StagingStudentCourseTranscript] PRIMARY KEY CLUSTERED  ([StudentCourseTranscriptKey]) ON [PRIMARY]

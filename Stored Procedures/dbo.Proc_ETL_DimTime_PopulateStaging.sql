@@ -26,7 +26,7 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
+		  
 
 		TRUNCATE TABLE Staging.[Time]
 
@@ -276,7 +276,7 @@ BEGIN
 					   cet.Description CalendarEventTypeDescription, 
 					   ses.LastModifiedDate AS SchoolSessisonModifiedDate, -- school sessions changes are ignored for BPS
 					   cet.LastModifiedDate AS CalendarEventTypeModifiedDate,
-					   DENSE_RANK() OVER (PARTITION BY ses.SchoolYear, s.SchoolId ORDER BY cd.Date) AS DayOfSchoolYear INTO #EdFiSchools
+					   DENSE_RANK() OVER (PARTITION BY ses.SchoolYear, s.SchoolId ORDER BY cd.Date) AS DayOfSchoolYear  INTO #EdFiSchools
 				FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.School s
 					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganization edOrg  ON s.SchoolId = edOrg.EducationOrganizationId
 					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDate cd ON s.SchoolId = cd.SchoolId
@@ -294,9 +294,6 @@ BEGIN
 					   (ses.LastModifiedDate > @LastLoadDate AND ses.LastModifiedDate <= @NewLoadDate) OR 
 					   (cet.LastModifiedDate > @LastLoadDate AND cet.LastModifiedDate <= @NewLoadDate)
 					  )
-			
-				--AND cd.Date = '2019-12-03' --AND s.SchoolId = 1020 -- AND cd.Date = '2019-12-03'
-				  -- ORDER BY [_sourceKey], ses.SchoolYear, SchoolDate
 			--)
 		
 			INSERT INTO Staging.[Time]
@@ -401,15 +398,14 @@ BEGIN
 				   ,'12/31/9999'   AS ValidTo
 				   , 1 AS IsCurrent
 			FROM @NonSchoolTime nst
-				 LEFT JOIN #EdFiSchools es ON nst.SchoolDate = es.SchoolDate
-			 
-			drop table #EdFiSchools
+				 LEFT JOIN #EdFiSchools es ON nst.SchoolDate = es.SchoolDate			 
+			DROP table #EdFiSchools
 		 END
 
 		
 
 
-		COMMIT TRANSACTION;		
+			
 	END TRY
 	BEGIN CATCH
 		
@@ -431,19 +427,7 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

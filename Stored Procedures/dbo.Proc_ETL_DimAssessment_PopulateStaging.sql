@@ -26,9 +26,7 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
-
-		
+			
 		DECLARE @Assessment TABLE
 		(   
 			AssessmentCategoryDescriptor_CodeValue NVARCHAR(50) NOT NULL,    
@@ -326,10 +324,9 @@ BEGIN
 			    ,ValidFrom
 			    ,ValidTo
 			    ,IsCurrent
-		FROM @Assessment;
-			    
+		FROM @Assessment;			    
 
-		COMMIT TRANSACTION;		
+				
 	END TRY
 	BEGIN CATCH
 		
@@ -352,18 +349,7 @@ BEGIN
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
 		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO

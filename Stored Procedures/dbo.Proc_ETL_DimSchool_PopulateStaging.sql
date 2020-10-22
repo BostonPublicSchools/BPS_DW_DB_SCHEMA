@@ -25,9 +25,7 @@ BEGIN
 
 
 	BEGIN TRY
-
-		BEGIN TRANSACTION;   
-
+	
 		TRUNCATE TABLE Staging.[School]
 		INSERT INTO Staging.[School]
 				   ([_sourceKey]
@@ -117,7 +115,9 @@ BEGIN
 			(edorg.LastModifiedDate > @LastLoadDate AND edorg.LastModifiedDate <= @NewLoadDate) OR
 			(ost.LastModifiedDate > @LastLoadDate AND ost.LastModifiedDate <= @NewLoadDate) OR
 			(sct.LastModifiedDate > @LastLoadDate AND sct.LastModifiedDate <= @NewLoadDate) OR
-			(tIt.LastModifiedDate > @LastLoadDate AND tIt.LastModifiedDate <= @NewLoadDate) 						
+			(tIt.LastModifiedDate > @LastLoadDate AND tIt.LastModifiedDate <= @NewLoadDate) 	
+			
+			
 			
 		--loading legacy data if it has not been loaded.
 		--load types are ignored as this data will only be loaded once.
@@ -192,7 +192,7 @@ BEGIN
 									WHERE 'Ed-Fi|' + Convert(NVARCHAR(MAX),LTRIM(RTRIM(sd.sch))) = ds._sourceKey);
 			END
 
-		COMMIT TRANSACTION;		
+		
 	END TRY
 	BEGIN CATCH
 		
@@ -214,19 +214,7 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+	
 	END CATCH;
 END;
 GO

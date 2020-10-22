@@ -7,10 +7,10 @@ CREATE TABLE [Staging].[StudentDiscipline]
 [SchoolKey] [int] NULL,
 [DisciplineIncidentKey] [int] NULL,
 [ModifiedDate] [datetime] NULL,
-[_sourceStudentKey] [int] NULL,
-[_sourceTimeKey] [int] NULL,
-[_sourceSchoolKey] [int] NULL,
-[_sourceDisciplineIncidentKey] [int] NULL
+[_sourceStudentKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceTimeKey] [date] NULL,
+[_sourceSchoolKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[_sourceDisciplineIncidentKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [Staging].[StudentDiscipline] ADD CONSTRAINT [PK_StagingStudentDiscipline] PRIMARY KEY CLUSTERED  ([StudentDisciplineKey]) ON [PRIMARY]

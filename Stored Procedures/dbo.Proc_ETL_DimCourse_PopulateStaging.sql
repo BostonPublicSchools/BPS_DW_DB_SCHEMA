@@ -26,8 +26,7 @@ BEGIN
 
 	BEGIN TRY
 
-		BEGIN TRANSACTION;   
-
+		
 		TRUNCATE TABLE Staging.Course
 		INSERT INTO Staging.Course
 		(
@@ -99,7 +98,8 @@ BEGIN
 			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
 			
 							
-			
+		
+		--[v34_EdFi_BPS_Production_Ods]
 		--loading legacy data if it has not been loaded.
 		--load types are ignored as this data will only be loaded once.
 		IF NOT EXISTS(SELECT 1 
@@ -157,7 +157,7 @@ BEGIN
 
 			END
 
-		COMMIT TRANSACTION;		
+		
 	END TRY
 	BEGIN CATCH
 		
@@ -179,19 +179,7 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		-- Test whether the transaction is uncommittable.
-		IF XACT_STATE( ) = -1
-			BEGIN
-				--The transaction is in an uncommittable state. Rolling back transaction
-				ROLLBACK TRANSACTION;
-			END;
-
-		-- Test whether the transaction is committable.
-		IF XACT_STATE( ) = 1
-			BEGIN
-				--The transaction is committable. Committing transaction
-				COMMIT TRANSACTION;
-			END;
+		
 	END CATCH;
 END;
 GO
