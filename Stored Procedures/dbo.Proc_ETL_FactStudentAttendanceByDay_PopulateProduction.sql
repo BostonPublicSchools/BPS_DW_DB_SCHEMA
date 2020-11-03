@@ -252,7 +252,7 @@ BEGIN
 					   AND d_sabd.[SchoolYear] = dt.SchoolYear)
 					   
 		INSERT INTO [Derived].[StudentAttendanceADA]([StudentId]
-																,[StudentStateId]
+																
 																,[FirstName]
 																,[LastName]
 																,[DistrictSchoolCode]
@@ -267,7 +267,6 @@ BEGIN
 
 		SELECT     DISTINCT
 					v_sabd.StudentId, 
-					v_sabd.StudentStateId, 
 					v_sabd.FirstName, 
 					v_sabd.LastName, 
 					v_sabd.[DistrictSchoolCode],
@@ -286,8 +285,8 @@ BEGIN
 						  INNER JOIN dbo.DimStudent st ON s_sabd.StudentKey = st.StudentKey
 					 WHERE v_sabd.StudentId = st.StudentUniqueId
 					   AND v_sabd.[SchoolYear] = dt.SchoolYear)
-		GROUP BY  v_sabd.StudentId, 
-					v_sabd.StudentStateId, 
+		GROUP BY    v_sabd.StudentId, 
+					
 					v_sabd.FirstName, 
 					v_sabd.LastName, 
 					v_sabd.[DistrictSchoolCode],

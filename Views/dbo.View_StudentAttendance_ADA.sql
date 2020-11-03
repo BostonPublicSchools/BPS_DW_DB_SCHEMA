@@ -6,8 +6,7 @@ GO
 CREATE VIEW [dbo].[View_StudentAttendance_ADA]
 WITH SCHEMABINDING
 AS (
-     select  StudentId, 
-			 StudentStateId, 
+     select  StudentId, 			 
 			 FirstName, 
 			 LastName, 
 			 [DistrictSchoolCode],
