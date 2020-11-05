@@ -35,7 +35,7 @@ BEGIN
 								WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),
 			s.TimeKey = (
 							SELECT TOP (1) dt.TimeKey
@@ -51,7 +51,7 @@ BEGIN
 								WHERE s._sourceSchoolKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),		
 			s.AttendanceEventCategoryKey = COALESCE(
 													(

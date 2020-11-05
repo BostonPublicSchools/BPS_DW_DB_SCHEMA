@@ -34,7 +34,7 @@ BEGIN
 								WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),
 			s.SchoolKey = (
 								SELECT TOP (1) ds.SchoolKey
@@ -42,7 +42,7 @@ BEGIN
 								WHERE s._sourceSchoolKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),
 			s.CourseKey = (
 								SELECT TOP (1) dc.CourseKey
@@ -50,7 +50,7 @@ BEGIN
 								WHERE s._sourceCourseKey = dc._sourceKey									
 									AND s.[ModifiedDate] >= dc.[ValidFrom]
 									AND s.[ModifiedDate] < dc.[ValidTo]
-								ORDER BY dc.[ValidFrom]
+								ORDER BY dc.[ValidFrom] DESC
 							)													             
         FROM Staging.StudentCourseTranscript s;
 

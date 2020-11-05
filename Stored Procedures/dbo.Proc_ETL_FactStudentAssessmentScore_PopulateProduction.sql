@@ -33,7 +33,7 @@ BEGIN
 								WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),
 			s.TimeKey = (
 							SELECT TOP (1) dt.TimeKey
@@ -47,7 +47,7 @@ BEGIN
 								WHERE s._sourceAssessmentKey = da._sourceKey									
 									AND s.[ModifiedDate] >= da.[ValidFrom]
 									AND s.[ModifiedDate] < da.[ValidTo]
-								ORDER BY da.[ValidFrom]
+								ORDER BY da.[ValidFrom] DESC
 						 	 )  										             
         FROM Staging.StudentAssessmentScore s;
 		

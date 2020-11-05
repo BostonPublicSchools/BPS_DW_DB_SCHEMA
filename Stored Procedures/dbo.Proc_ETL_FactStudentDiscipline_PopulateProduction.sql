@@ -33,7 +33,7 @@ BEGIN
 								WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),
 			s.TimeKey = (
 							SELECT TOP (1) dt.TimeKey
@@ -49,7 +49,7 @@ BEGIN
 								WHERE s._sourceSchoolKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom]
+								ORDER BY ds.[ValidFrom] DESC
 							),		
 			s.DisciplineIncidentKey =(
 										SELECT TOP (1) ddi.DisciplineIncidentKey
@@ -57,7 +57,7 @@ BEGIN
 										WHERE s._sourceDisciplineIncidentKey = ddi._sourceKey									
 											AND s.[ModifiedDate] >= ddi.[ValidFrom]
 											AND s.[ModifiedDate] < ddi.[ValidTo]
-										ORDER BY ddi.[ValidFrom]
+										ORDER BY ddi.[ValidFrom] DESC
 									)  
 										             
         FROM Staging.StudentDiscipline s;

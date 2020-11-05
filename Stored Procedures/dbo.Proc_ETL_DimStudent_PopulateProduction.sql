@@ -160,7 +160,8 @@ BEGIN
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsCurrent = 0
 		FROM 
 			[dbo].[DimStudent] AS prod
 			INNER JOIN Staging.Student AS stage ON prod._sourceKey = stage._sourceKey
