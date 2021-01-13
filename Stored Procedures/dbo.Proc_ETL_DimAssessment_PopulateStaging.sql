@@ -95,16 +95,16 @@ BEGIN
 		SELECT DISTINCT 
 			   a_d.CodeValue AS [AssessmentCategoryDescriptor_CodeValue],
 			   a_d.[Description] AS [AssessmentCategoryDescriptor_Description],
-			   a.AssessmentFamilyTitle AS [AssessmentFamilyTitle],
+			   a.AssessmentFamily AS [AssessmentFamilyTitle],
 			   ISNULL(a.AdaptiveAssessment,0) AS [AdaptiveAssessment_Indicator], 
 			   a.AssessmentIdentifier,
 			   'N/A' AS ObjectiveAssessmentIdentificationCode,
 			   a.AssessmentTitle,	   
 
-			   a_s_armt.CodeValue AS ReportingMethodDescriptor_CodeValue,
-			   a_s_armt.[Description] AS ReportingMethodDescriptor_Description,
-			   a_s_rdtt.CodeValue AS ResultDatatypeTypeDescriptor_CodeValue,
-			   a_s_rdtt.[Description] AS ResultDatatypeTypeDescriptor_Description,
+			   as_arm_d.CodeValue AS ReportingMethodDescriptor_CodeValue,
+			   as_arm_d.[Description] AS ReportingMethodDescriptor_Description,
+			   asdt_d.CodeValue AS ResultDatatypeTypeDescriptor_CodeValue,
+			   asdt_d.[Description] AS ResultDatatypeTypeDescriptor_Description,
 
 			   1 AS AssessmentScore_Indicator,
 			   0 AS AssessmentPerformanceLevel_Indicator,
@@ -126,27 +126,28 @@ BEGIN
 			   '12/31/9999' AS ValidTo,
 			   1 AS IsCurrent,
 			   0 AS IsLegacy
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Assessment a 
-			 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor a_d ON a.AssessmentCategoryDescriptorId = a_d.DescriptorId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AssessmentScore a_s ON a.AssessmentIdentifier = a_s.AssessmentIdentifier 
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AssessmentReportingMethodType a_s_armt ON a_s.AssessmentReportingMethodTypeId = a_s_armt.AssessmentReportingMethodTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ResultDatatypeType a_s_rdtt ON a_s.ResultDatatypeTypeId = a_s_rdtt.ResultDatatypeTypeId
+		--select *
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Assessment a 
+			 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor a_d ON a.AssessmentCategoryDescriptorId = a_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.AssessmentScore a_s ON a.AssessmentIdentifier = a_s.AssessmentIdentifier 
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor as_arm_d ON a_s.AssessmentReportingMethodDescriptorId = as_arm_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor asdt_d ON a_s.ResultDatatypeTypeDescriptorId = asdt_d.DescriptorId
 		WHERE CHARINDEX('MCAS',a.AssessmentIdentifier,1) = 1 
 		      AND (a.LastModifiedDate > @LastLoadDate AND a.LastModifiedDate <= @NewLoadDate)
 		Union
 		SELECT DISTINCT 
 			   a_d.CodeValue AS [AssessmentCategoryDescriptor_CodeValue],
 			   a_d.[Description] AS [AssessmentCategoryDescriptor_Description],
-			   a.AssessmentFamilyTitle AS [AssessmentFamilyTitle],
+			   a.AssessmentFamily AS [AssessmentFamilyTitle],
 			   ISNULL(a.AdaptiveAssessment,0) AS [AdaptiveAssessment_Indicator], 
 			   a.AssessmentIdentifier,
 				'N/A' AS ObjectiveAssessmentIdentificationCode,
 			   a.AssessmentTitle,	   
 	   
-			   a_pl_armt.CodeValue AS ReportingMethodDescriptor_CodeValue,
-			   a_pl_armt.[Description] AS ReportingMethodDescriptor_Description,
-			   a_pl_rdtt.CodeValue AS ResultDatatypeTypeDescriptor_CodeValue,
-			   a_pl_rdtt.[Description] AS ResultDatatypeTypeDescriptor_Description,
+			   a_pl_arm_d.CodeValue AS ReportingMethodDescriptor_CodeValue,
+			   a_pl_arm_d.[Description] AS ReportingMethodDescriptor_Description,
+			   a_pl_dt_d.CodeValue AS ResultDatatypeTypeDescriptor_CodeValue,
+			   a_pl_dt_d.[Description] AS ResultDatatypeTypeDescriptor_Description,
 
 			   0 AS AssessmentScore_Indicator,
 			   1 AS AssessmentPerformanceLevel_Indicator,
@@ -168,14 +169,12 @@ BEGIN
 			   '12/31/9999' AS ValidTo,
 			   1 AS IsCurrent,
 			   0 AS IsLegacy
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Assessment a 
-			 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor a_d ON a.AssessmentCategoryDescriptorId = a_d.DescriptorId
-	 
-	 
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AssessmentPerformanceLevel a_pl ON a.AssessmentIdentifier = a_pl.AssessmentIdentifier 
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor a_pl_d ON a_pl.PerformanceLevelDescriptorId = a_pl_d.DescriptorId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AssessmentReportingMethodType a_pl_armt ON a_pl.AssessmentReportingMethodTypeId = a_pl_armt.AssessmentReportingMethodTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ResultDatatypeType a_pl_rdtt ON a_pl.ResultDatatypeTypeId = a_pl_rdtt.ResultDatatypeTypeId
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Assessment a 
+			 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor a_d ON a.AssessmentCategoryDescriptorId = a_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.AssessmentPerformanceLevel a_pl ON a.AssessmentIdentifier = a_pl.AssessmentIdentifier 
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor a_pl_d ON a_pl.PerformanceLevelDescriptorId = a_pl_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor a_pl_arm_d ON a_pl.AssessmentReportingMethodDescriptorId = a_pl_arm_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor a_pl_dt_d ON a_pl.ResultDatatypeTypeDescriptorId = a_pl_dt_d.DescriptorId
 		WHERE CHARINDEX('MCAS',a.AssessmentIdentifier,1) = 1 
 		      AND (a.LastModifiedDate > @LastLoadDate AND a.LastModifiedDate <= @NewLoadDate)
 		--ORDER BY a.AssessmentIdentifier, ObjectiveAssessmentIdentificationCode, ReportingMethodDescriptor_CodeValue
@@ -205,7 +204,7 @@ BEGIN
 								  CAST(perf2 AS NVARCHAR(MAX)) AS [Proficiency level 2]
      
 							FROM [BPSGranary02].[RAEDatabase].[dbo].[mcasitems] 
-							WHERE schyear >= 2015 ) scores
+							WHERE schyear in (2015,2016,2017) ) scores
 					UNPIVOT
 					(
 					   scorevalue

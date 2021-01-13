@@ -126,7 +126,7 @@ BEGIN
 														  AND dt.SchoolKey is not null   
 														  AND dschool.SchoolKey = dt.SchoolKey
 						  INNER JOIN dbo.DimDisciplineIncident d_di ON CONCAT_WS('|','LegacyDW',Convert(NVARCHAR(MAX),di.CND_INCIDENT_ID))    = d_di._sourceKey
-					WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  > '2015-09-01'
+					WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  BETWEEN '2015-09-01' AND '2018-06-30' 
 			 END;
 
         --re-creating the columnstore index

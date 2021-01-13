@@ -50,7 +50,7 @@ BEGIN
 		)
 		
 		SELECT DISTINCT
-			   CONCAT_WS('|',Convert(NVARCHAR(MAX),ct.StudentUSI),Convert(NVARCHAR(MAX),ct.SchoolYear),Convert(NVARCHAR(MAX),ct.SchoolId),Convert(NVARCHAR(MAX),ct.CourseCode),td.CodeValue) AS _sourceKey,
+			   CONCAT_WS('|',Convert(NVARCHAR(MAX),ct.StudentUSI),Convert(NVARCHAR(MAX),ct.SchoolYear),Convert(NVARCHAR(MAX),ct.EducationOrganizationId),Convert(NVARCHAR(MAX),ct.CourseCode),td.CodeValue) AS _sourceKey,
 			   NULL AS StudentKey,
 			   NULL AS TimeKey,	  
 			   NULL AS CourseKey,
@@ -64,10 +64,10 @@ BEGIN
 		       ct.SchoolYear AS _sourceSchoolYear,		          
 			   td.CodeValue AS _sourceTerm,		          
 			   CONCAT_WS('|','Ed-Fi',ct.CourseCode)  AS _sourceCourseKey,
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ct.SchoolId))  AS _sourceSchoolKey
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ct.EducationOrganizationId))  AS _sourceSchoolKey
 		--select *  
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseTranscript ct
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor td ON ct.TermDescriptorId = td.DescriptorId
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CourseTranscript ct
+			INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor td ON ct.TermDescriptorId = td.DescriptorId
 		WHERE  			
 			  ct.SchoolYear >= 2019			
 			 AND  (

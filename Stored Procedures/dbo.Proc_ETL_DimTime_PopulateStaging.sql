@@ -272,30 +272,33 @@ BEGIN
 					   --ses.SessionName,
 					   td.CodeValue TermDescriptorCodeValue, 
 					   td.Description TermDescriptorDescription,       
-					   cet.CodeValue CalendarEventTypeCodeValue,
-					   cet.Description CalendarEventTypeDescription, 
-					   ses.LastModifiedDate AS SchoolSessisonModifiedDate, -- school sessions changes are ignored for BPS
-					   cet.LastModifiedDate AS CalendarEventTypeModifiedDate,
+					   cedv.CodeValue CalendarEventTypeCodeValue,
+					   cedv.Description CalendarEventTypeDescription, 
+					   ses.LastModifiedDate AS SchoolSessionModifiedDate, -- school sessions changes are ignored for BPS
+					   cedv.LastModifiedDate AS CalendarEventTypeModifiedDate,
 					   DENSE_RANK() OVER (PARTITION BY ses.SchoolYear, s.SchoolId ORDER BY cd.Date) AS DayOfSchoolYear  INTO #EdFiSchools
-				FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.School s
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganization edOrg  ON s.SchoolId = edOrg.EducationOrganizationId
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDate cd ON s.SchoolId = cd.SchoolId
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce ON cd.SchoolId = cdce.SchoolId
-																										AND cd.Date = cdce.Date
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarEventDescriptor ced  ON cdce.CalendarEventDescriptorId = ced.CalendarEventDescriptorId
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor cedv  ON ced.CalendarEventDescriptorId = cedv.DescriptorId
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarEventType cet ON ced.CalendarEventTypeId = cet.CalendarEventTypeId
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Session ses ON s.SchoolId = ses.SchoolId
-																					 AND cd.Date BETWEEN ses.BeginDate AND ses.EndDate
-					INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor td ON ses.TermDescriptorId = td.DescriptorId
+				--select *
+				FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.School s
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganization edOrg  ON s.SchoolId = edOrg.EducationOrganizationId
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDate cd ON s.SchoolId = cd.SchoolId
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce ON cd.SchoolId = cdce.SchoolId
+																										    AND cd.Date = cdce.Date
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarEventDescriptor ced  ON cdce.CalendarEventDescriptorId = ced.CalendarEventDescriptorId
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor cedv  ON ced.CalendarEventDescriptorId = cedv.DescriptorId					
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Session ses ON s.SchoolId = ses.SchoolId
+																					     AND cd.Date BETWEEN ses.BeginDate AND ses.EndDate
+					INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor td ON ses.TermDescriptorId = td.DescriptorId
 
 				WHERE  cd.Date >= @startDate AND 
 					  (
 					   (ses.LastModifiedDate > @LastLoadDate AND ses.LastModifiedDate <= @NewLoadDate) OR 
-					   (cet.LastModifiedDate > @LastLoadDate AND cet.LastModifiedDate <= @NewLoadDate)
+					   (cedv.LastModifiedDate > @LastLoadDate AND cedv.LastModifiedDate <= @NewLoadDate)
 					  )
 			--)
+			
 		
+		
+
 			INSERT INTO Staging.[Time]
 					   ([SchoolDate]
 					   ,[SchoolDate_MMYYYY]
@@ -336,7 +339,7 @@ BEGIN
 					   ,SchoolTermDescriptor_CodeValue
 					   ,SchoolTermDescriptor_Description
 		           
-					   ,SchoolSessisonModifiedDate
+					   ,SchoolSessionModifiedDate
 					   ,CalendarEventTypeModifiedDate
 
 					   ,[ValidFrom]
@@ -381,14 +384,14 @@ BEGIN
 				  ,es.TermDescriptorCodeValue
 				  ,es.TermDescriptorDescription	  
 
-				  ,COALESCE(es.SchoolSessisonModifiedDate,'07/01/2015') AS SchoolSessisonModifiedDate -- school sessions are ignore for BPS
+				  ,COALESCE(es.SchoolSessionModifiedDate,'07/01/2015') AS SchoolSessionModifiedDate -- school sessions are ignore for BPS
 				  ,COALESCE(es.CalendarEventTypeModifiedDate,'07/01/2015')  AS CalendarEventTypeModifiedDate
  
 				  ,CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 							  COALESCE(
 							  (SELECT MAX(t) FROM
 								 (VALUES
-								   (es.SchoolSessisonModifiedDate)
+								   (es.SchoolSessionModifiedDate)
 								 , (es.CalendarEventTypeModifiedDate)                             
 								 ) AS [MaxLastModifiedDate](t)
 							   ),'07/01/2015')

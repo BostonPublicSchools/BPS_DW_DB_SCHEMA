@@ -236,7 +236,7 @@ BEGIN
 																	  AND dt.SchoolDate BETWEEN ds.ValidFrom AND ds.ValidTo
 						INNER JOIN [dbo].DimAssessment da ON 'LegacyDW|' + Convert(NVARCHAR(MAX),us.testid)  + '|N/A|' + Convert(NVARCHAR(MAX),us.scoretype)  = da._sourceKey
 	
-					WHERE  dt.SchoolDate >= '07/01/2015';
+					WHERE  dt.SchoolDate BETWEEN '07/01/2015' AND '2018-06-30';
 
 			 END;
 		

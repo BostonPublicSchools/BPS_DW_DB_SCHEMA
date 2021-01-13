@@ -149,7 +149,8 @@ BEGIN
 																					ELSE 'In Attendance' 	                                                                   
 																				END = daec.AttendanceEventCategoryDescriptor_CodeValue
  
-				WHERE  a.[Date] >= '2015-07-01'
+				WHERE  a.[Date] BETWEEN '2015-07-01' AND '2018-06-30'				
+				   AND a.sch between '1000' and '4700'
 			  END
 
 		--re-creating the columnstore index

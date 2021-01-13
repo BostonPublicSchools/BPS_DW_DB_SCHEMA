@@ -45,11 +45,11 @@ BEGIN
 			    CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),d.DescriptorId)) AS [_sourceKey],
 				COALESCE(d.CodeValue,'In Attendance') as AttendanceEventCategoryDescriptor_CodeValue,
 				COALESCE(d.CodeValue,'In Attendance') as AttendanceEventCategoryDescriptor_Description,
-				case when COALESCE(d.CodeValue,'In Attendance') in ('In Attendance','Tardy','Early departure') then 1 else 0 end as [InAttendance_Indicator], -- not used
+				case when COALESCE(d.CodeValue,'In Attendance') in ('In Attendance','Tardy','Early departure','Partial') then 1 else 0 end as [InAttendance_Indicator], -- todo: waiting for BPS team to finalize all codes
 				case when COALESCE(d.CodeValue,'In Attendance') in ('Unexcused Absence') then 1 else 0 end as [UnexcusedAbsence_Indicator],
 				case when COALESCE(d.CodeValue,'In Attendance') in ('Excused Absence') then 1 else 0 end as [ExcusedAbsence_Indicator],
 				case when COALESCE(d.CodeValue,'In Attendance') in ('Tardy') then 1 else 0 end as [Tardy_Indicator],	   
-				case when COALESCE(d.CodeValue,'In Attendance') in ('Early departure') then 1 else 0 end as [EarlyDeparture_Indicator],	  
+				case when COALESCE(d.CodeValue,'In Attendance') in ('Partial') then 1 else 0 end as [EarlyDeparture_Indicator],	  
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(d.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS [CategoryModifiedDate],
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
@@ -63,12 +63,13 @@ BEGIN
 				'12/31/9999' AS ValidTo,
 				1  AS IsCurrent				
 		--select *  
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d
-		WHERE d.Namespace IN ('http://ed-fi.org/Descriptor/AttendanceEventCategoryDescriptor.xml',
-		                      'http://ed-fi.org/Descriptor/Follett/Aspen/AttendanceEventCategoryDescriptor.xml')	
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d
+		WHERE d.Namespace IN ('uri://ed-fi.org/AttendanceEventCategoryDescriptor',
+		                      'uri://mybps.org/AttendanceEventCategoryDescriptor')	
 			  AND (d.LastModifiedDate > @LastLoadDate AND d.LastModifiedDate <= @NewLoadDate);
 		
-			
+
+
 	END TRY
 	BEGIN CATCH
 		
