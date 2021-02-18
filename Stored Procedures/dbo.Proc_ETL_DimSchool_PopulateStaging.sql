@@ -69,53 +69,54 @@ BEGIN
 				END AS UmbrellaSchoolCode,
 				edorg.ShortNameOfInstitution, 
 				edorg.NameOfInstitution,
-				sc_d.CodeValue AS SchoolCategoryType, 
-				CASE  WHEN sc_d.CodeValue  IN ('Elementary School') THEN 1 ELSE 0 END  [SchoolCategoryType_Elementary_Indicator],
-				CASE  WHEN sc_d.CodeValue  IN ('Middle School') THEN 1 ELSE 0 END  [SchoolCategoryType_Middle_Indicator],
-				CASE  WHEN sc_d.CodeValue  IN ('High School') THEN 1 ELSE 0 END  [SchoolCategoryType_HighSchool_Indicator],
-				CASE  WHEN sc_d.CodeValue  NOT IN ('Elementary School','Middle School','High School') THEN 1 ELSE 0 END  [SchoolCategoryType_Combined_Indicator],
+				sct.CodeValue AS SchoolCategoryType, 
+				CASE  WHEN sct.CodeValue  IN ('Elementary School') THEN 1 ELSE 0 END  [SchoolCategoryType_Elementary_Indicator],
+				CASE  WHEN sct.CodeValue  IN ('Middle School') THEN 1 ELSE 0 END  [SchoolCategoryType_Middle_Indicator],
+				CASE  WHEN sct.CodeValue  IN ('High School') THEN 1 ELSE 0 END  [SchoolCategoryType_HighSchool_Indicator],
+				CASE  WHEN sct.CodeValue  NOT IN ('Elementary School','Middle School','High School') THEN 1 ELSE 0 END  [SchoolCategoryType_Combined_Indicator],
 				0  [SchoolCategoryType_Other_Indicator],
-				COALESCE(t1_d.CodeValue,'N/A') AS TitleIPartASchoolDesignationTypeCodeValue,
-				CASE WHEN t1_d.CodeValue NOT IN ('Not designated as a Title I Part A school','N/A') THEN 1 ELSE 0 END AS TitleIPartASchoolDesignation_Indicator,
-				COALESCE(os_d.CodeValue,'N/A') AS OperationalStatusTypeDescriptor_CodeValue,	
-				COALESCE(os_d.[Description],'N/A') AS OperationalStatusTypeDescriptor_Description,
+				COALESCE(tIt.CodeValue,'N/A') AS TitleIPartASchoolDesignationTypeCodeValue,
+				CASE WHEN tIt.CodeValue NOT IN ('Not designated as a Title I Part A school','N/A') THEN 1 ELSE 0 END AS TitleIPartASchoolDesignation_Indicator,
+				COALESCE(ost.CodeValue,'N/A') AS OperationalStatusTypeDescriptor_CodeValue,	
+				COALESCE(ost.[Description],'N/A') AS OperationalStatusTypeDescriptor_Description,
 				 
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(edorg.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolNameModifiedDate,
- 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(os_d.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolOperationalStatusTypeModifiedDate,
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(sc_d.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolCategoryModifiedDate,
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(t1_d.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolTitle1StatusModifiedDate,
+ 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(ost.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolOperationalStatusTypeModifiedDate,
+				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(sct.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolCategoryModifiedDate,
+				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(tIt.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolTitle1StatusModifiedDate,
 
 				--Making sure the first time, the ValidFrom is set to beginning of time 
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
                              (VALUES
                                (edorg.LastModifiedDate)
-                             , (os_d.LastModifiedDate)
-                             , (sc_d.LastModifiedDate)
-                             , (t1_d.LastModifiedDate)                             
+                             , (ost.LastModifiedDate)
+                             , (sct.LastModifiedDate)
+                             , (tIt.LastModifiedDate)                             
                              ) AS [MaxLastModifiedDate](t)
                            )
 					ELSE 
-					      '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
+					      @LastLoadDate -- setting the validFrom to beggining of time during thre first load. 
 				END AS ValidFrom,
 				'12/31/9999' AS ValidTo,
-				CASE WHEN COALESCE(os_d.CodeValue,'N/A') IN ('Active','Added','Changed Agency','Continuing','New','Reopened') THEN 1  ELSE 0  END AS IsCurrent		
+				CASE WHEN COALESCE(ost.CodeValue,'N/A') IN ('Active','Added','Changed Agency','Continuing','New','Reopened') THEN 1  ELSE 0  END AS IsCurrent		
 		--SELECT distinct *
-		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.School s
-		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganization edorg on s.SchoolId = edorg.EducationOrganizationId
-		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor os_d ON edorg.OperationalStatusDescriptorId = os_d.DescriptorId
-		     LEFT JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.SchoolCategory sc on s.SchoolId = sc.SchoolId
-		     LEFT JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor sc_d on sc.SchoolCategoryDescriptorId = sc_d.DescriptorId
-		     LEFT JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor t1_d on s.TitleIPartASchoolDesignationDescriptorId = t1_d.DescriptorId
-		     LEFT JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganizationIdentificationCode eoic ON edorg.EducationOrganizationId = eoic.EducationOrganizationId 
-		     																			   AND eoic.EducationOrganizationIdentificationSystemDescriptorId = 835 --state code
-		     LEFT JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganizationIdentificationCode eoic_sch ON edorg.EducationOrganizationId = eoic_sch.EducationOrganizationId 
-																					   AND eoic_sch.EducationOrganizationIdentificationSystemDescriptorId = 830 --district code
+		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.School s
+		     INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganization edorg on s.SchoolId = edorg.EducationOrganizationId
+		     INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.OperationalStatusType ost ON edorg.OperationalStatusTypeId = ost.OperationalStatusTypeId
+		     LEFT JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolCategory sc on s.SchoolId = sc.SchoolId
+		     LEFT JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolCategoryType sct on sc.SchoolCategoryTypeId = sct.SchoolCategoryTypeId
+		     LEFT JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.TitleIPartASchoolDesignationType tIt on s.TitleIPartASchoolDesignationTypeId = tIt.TitleIPartASchoolDesignationTypeId
+		     LEFT JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganizationIdentificationCode eoic ON edorg.EducationOrganizationId = eoic.EducationOrganizationId 
+		     																			   AND eoic.EducationOrganizationIdentificationSystemDescriptorId = 433 --state code
+		     LEFT JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganizationIdentificationCode eoic_sch ON edorg.EducationOrganizationId = eoic_sch.EducationOrganizationId 
+																					   AND eoic_sch.EducationOrganizationIdentificationSystemDescriptorId = 428 --district code
 		WHERE 
 			(edorg.LastModifiedDate > @LastLoadDate AND edorg.LastModifiedDate <= @NewLoadDate) OR
-			(os_d.LastModifiedDate > @LastLoadDate AND os_d.LastModifiedDate <= @NewLoadDate) OR
-			(sc_d.LastModifiedDate > @LastLoadDate AND sc_d.LastModifiedDate <= @NewLoadDate) OR
-			(t1_d.LastModifiedDate > @LastLoadDate AND t1_d.LastModifiedDate <= @NewLoadDate) 	
+			(ost.LastModifiedDate > @LastLoadDate AND ost.LastModifiedDate <= @NewLoadDate) OR
+			(sct.LastModifiedDate > @LastLoadDate AND sct.LastModifiedDate <= @NewLoadDate) OR
+			(tIt.LastModifiedDate > @LastLoadDate AND tIt.LastModifiedDate <= @NewLoadDate) 	
+			
 			
 			
 		--loading legacy data if it has not been loaded.
@@ -181,7 +182,7 @@ BEGIN
 				    '07/01/2015' AS SchoolCategoryModifiedDate,
 				    '07/01/2015' AS SchoolTitle1StatusModifiedDate,
 
-					'07/01/2015' AS ValidFrom,
+					@LastLoadDate AS ValidFrom,
 					GETDATE() AS ValidTo,
 					0 AS IsCurrent
 				--SELECT *

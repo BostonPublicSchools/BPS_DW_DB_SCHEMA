@@ -64,5 +64,7 @@ CREATE TABLE [dbo].[DimStudent]
 GO
 ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [PK_DimStudent] PRIMARY KEY CLUSTERED  ([StudentKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom]) INCLUDE ([StudentKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [StudentKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [IX_DimStudent_IsCurrent] ON [dbo].[DimStudent] ([IsCurrent]) ON [PRIMARY]
 GO

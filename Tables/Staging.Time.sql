@@ -38,7 +38,7 @@ CREATE TABLE [Staging].[Time]
 [SchoolCalendarEventType_Description] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [SchoolTermDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [SchoolTermDescriptor_Description] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
-[SchoolSessionModifiedDate] [datetime] NOT NULL,
+[SchoolSessisonModifiedDate] [datetime] NOT NULL,
 [CalendarEventTypeModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,

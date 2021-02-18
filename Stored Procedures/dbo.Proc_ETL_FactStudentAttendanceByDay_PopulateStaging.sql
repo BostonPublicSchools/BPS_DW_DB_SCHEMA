@@ -72,7 +72,7 @@ BEGIN
 					LastModifiedDate,
 					AttendanceEventCategoryDescriptorId,					
 					LTRIM(RTRIM(COALESCE(AttendanceEventReason,''))) AS AttendanceEventReason 
-		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAttendanceEvent
+		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAttendanceEvent
 		WHERE SchoolYear >= 2019
 			AND (LastModifiedDate > @LastLoadDate  AND LastModifiedDate <= @NewLoadDate)
 		
@@ -115,7 +115,7 @@ BEGIN
 			BEGIN
 				INSERT INTO #StudentsToBeProcessed (StudentUSI, EventDate, LastModifiedDate)
 				SELECT DISTINCT StudentUSI, NULL AS EventDate, NULL AS LastModifiedDate --we don't care about event changes the first this runs. 
-				FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation
+				FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation
 				WHERE SchoolYear >= 2019
 			END;
 		
@@ -150,11 +150,11 @@ BEGIN
 		          CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),ssae.AttendanceEventCategoryDescriptorId))  AS _sourceAttendanceEventCategoryKey
 				  				  
 			--select *  
-			FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa 
-				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDate cda on ssa.SchoolId = cda.SchoolId 														   
-				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce on cda.Date=cdce.Date 
+			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa 
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDate cda on ssa.SchoolId = cda.SchoolId 														   
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce on cda.Date=cdce.Date 
 																					 and cda.SchoolId=cdce.SchoolId
-				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_cdce on cdce.CalendarEventDescriptorId = d_cdce.DescriptorId
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_cdce on cdce.CalendarEventDescriptorId = d_cdce.DescriptorId
 																	  and d_cdce.CodeValue='Instructional day' -- ONLY Instructional days
 	            INNER JOIN  #StudentsToBeProcessed stbp ON ssa.StudentUSI = stbp.StudentUSI
 				                                      AND (stbp.EventDate IS NULL OR 
