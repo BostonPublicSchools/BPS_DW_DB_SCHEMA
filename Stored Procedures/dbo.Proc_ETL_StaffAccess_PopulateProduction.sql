@@ -250,6 +250,7 @@ BEGIN
 
 		--Staff Current Students
 		---------------------------------------------------------------------------------------
+		/*
 		--dropping the columnstore index
 		DROP INDEX IF EXISTS CSI_Derived_StaffCurrentStudents ON [Derived].StaffCurrentStudents;
 
@@ -319,7 +320,7 @@ BEGIN
 		
 					 
         CREATE COLUMNSTORE INDEX CSI_Derived_StaffCurrentStudents  ON [Derived].StaffCurrentStudents ( [StaffKey],StudentKey)		
-
+		*/
 	    DROP TABLE IF EXISTS #currentYearStaff_DistrictAdmins;
 		DROP TABLE IF EXISTS #currentYearStaff_SchoolAdmins;
 		DROP TABLE IF EXISTS #currentYearStaff_Teachers;

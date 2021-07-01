@@ -2,6 +2,7 @@ CREATE TABLE [Staging].[Course]
 (
 [CourseKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[LocalCourseCode] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [CourseCode] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [CourseTitle] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [CourseDescription] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,

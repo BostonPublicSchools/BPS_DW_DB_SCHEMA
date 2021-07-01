@@ -232,12 +232,12 @@ BEGIN
 					WHEN s.HispanicLatinoEthnicity = 1 THEN 'Latinx'
 					ELSE COALESCE(sr.RaceCodes,'N/A')
 			   END AS StateRaceCode,
-			   sr.Race_AmericanIndianAlaskanNative_Indicator,
-			   sr.Race_Asian_Indicator ,
+			   COALESCE(sr.Race_AmericanIndianAlaskanNative_Indicator,0) AS Race_AmericanIndianAlaskanNative_Indicator,
+			   COALESCE(sr.Race_Asian_Indicator,0) AS Race_Asian_Indicator ,
+			   COALESCE(sr.Race_BlackAfricaAmerican_Indicator,0) AS Race_BlackAfricaAmerican_Indicator ,
+			   COALESCE(sr.Race_NativeHawaiianPacificIslander_Indicator,0) AS Race_NativeHawaiianPacificIslander_Indicator ,
+			   COALESCE(sr.Race_White_Indicator,0) AS Race_White_Indicator ,
 
-			   sr.Race_BlackAfricaAmerican_Indicator,
-			   sr.Race_NativeHawaiianPacificIslander_Indicator,
-			   sr.Race_White_Indicator,
 			   CASE WHEN sr.RaceCount > 1 AND s.HispanicLatinoEthnicity = 0 THEN 1 ELSE 0 END AS Race_MultiRace_Indicator, 
 			   sr.Race_ChooseNotRespond_Indicator,
 			   sr.Race_Other_Indicator,

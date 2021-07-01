@@ -36,3 +36,5 @@ CREATE TABLE [dbo].[DimStaff]
 GO
 ALTER TABLE [dbo].[DimStaff] ADD CONSTRAINT [PK_DimStaff] PRIMARY KEY CLUSTERED  ([StaffKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimSatff_CoveringIndex] ON [dbo].[DimStaff] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [StaffKey]) ON [PRIMARY]
+GO

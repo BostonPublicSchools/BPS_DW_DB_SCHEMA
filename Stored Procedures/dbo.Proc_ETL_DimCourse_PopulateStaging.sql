@@ -31,6 +31,7 @@ BEGIN
 		INSERT INTO Staging.Course
 		(
 		    _sourceKey,
+			LocalCourseCode,
 		    CourseCode,
 		    CourseTitle,
 		    CourseDescription,
@@ -54,6 +55,7 @@ BEGIN
         --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT DISTINCT 
 			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),c.CourseCode)) AS [_sourceKey],
+			   co.LocalCourseCode,
 			   c.CourseCode,
 			   c.CourseTitle,
 			   c.CourseDescription,
@@ -87,15 +89,14 @@ BEGIN
 				1 AS IsCurrent
 		--select *
 		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
+		     INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co ON c.CourseCode = co.CourseCode
 			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
 			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristicType clct ON clc.CourseLevelCharacteristicTypeId = clct.CourseLevelCharacteristicTypeId
 			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AcademicSubjectType ast ON c.AcademicSubjectDescriptorId = ast.AcademicSubjectTypeId
 			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseGPAApplicabilityType cgat ON c.CourseGPAApplicabilityTypeId = cgat.CourseGPAApplicabilityTypeId
-		WHERE EXISTS (SELECT 1 
-					  FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co 
-					  WHERE c.CourseCode = co.CourseCode
-						AND co.SchoolYear >=2019) AND
-			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
+		WHERE co.SchoolYear >=2019 
+		      AND
+			  (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
 			
 							
 		

@@ -2,6 +2,7 @@ CREATE TABLE [dbo].[DimCourse]
 (
 [CourseKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[LocalCourseCode] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [CourseCode] [nvarchar] (60) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [CourseTitle] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [CourseDescription] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -24,5 +25,5 @@ CREATE TABLE [dbo].[DimCourse]
 GO
 ALTER TABLE [dbo].[DimCourse] ADD CONSTRAINT [PK_DimCourse] PRIMARY KEY CLUSTERED  ([CourseKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom]) INCLUDE ([CourseKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [CourseKey]) ON [PRIMARY]
 GO
