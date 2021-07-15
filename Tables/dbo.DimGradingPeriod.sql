@@ -16,3 +16,5 @@ CREATE TABLE [dbo].[DimGradingPeriod]
 GO
 ALTER TABLE [dbo].[DimGradingPeriod] ADD CONSTRAINT [PK_DimGradingPeriod] PRIMARY KEY CLUSTERED  ([GradingPeriodKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimGradingPeriod_CoveringIndex] ON [dbo].[DimGradingPeriod] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([GradingPeriodKey]) ON [PRIMARY]
+GO

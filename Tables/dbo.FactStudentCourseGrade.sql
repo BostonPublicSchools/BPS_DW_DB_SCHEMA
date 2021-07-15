@@ -1,6 +1,6 @@
 CREATE TABLE [dbo].[FactStudentCourseGrade]
 (
-[_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[_sourceKey] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [TimeKey] [int] NOT NULL,
 [GradingPeriodKey] [int] NOT NULL,
 [StudentSectionKey] [int] NOT NULL,

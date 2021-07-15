@@ -62,7 +62,7 @@ BEGIN
 				                                                                         AND g.SequenceOfCourse = gp.PeriodSequence
 																						 AND g.SchoolId = gp.SchoolId
 																						 AND g.SchoolYear = dbo.Func_ETL_GetSchoolYear(gp.BeginDate) 
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor AS td ON gp.GradingPeriodDescriptorId = td.DescriptorId
+				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor AS td ON g.TermDescriptorId = td.DescriptorId
 		WHERE gt.CodeValue = 'Grading Period'
 		      AND g.SchoolYear >= 2019 
 		      AND (

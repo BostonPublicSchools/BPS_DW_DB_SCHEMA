@@ -14,3 +14,7 @@ CREATE TABLE [Staging].[StudentCourseGrade]
 GO
 ALTER TABLE [Staging].[StudentCourseGrade] ADD CONSTRAINT [PK_StagingStudentCourseGrade] PRIMARY KEY CLUSTERED  ([StudentCourseGradetKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [Staging_StudentCourseGrade__SourceGradingPeriodey] ON [Staging].[StudentCourseGrade] ([_sourceGradingPeriodey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX [Staging_StudentCourseGrade__SourceStudentSectionKey] ON [Staging].[StudentCourseGrade] ([_sourceStudentSectionKey]) ON [PRIMARY]
+GO

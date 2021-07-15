@@ -17,3 +17,5 @@ CREATE TABLE [dbo].[DimStudentSection]
 GO
 ALTER TABLE [dbo].[DimStudentSection] ADD CONSTRAINT [PK_DimStudentSection] PRIMARY KEY CLUSTERED  ([StudentSectionKey]) ON [PRIMARY]
 GO
+CREATE NONCLUSTERED INDEX [DimStudentSection_CoveringIndex] ON [dbo].[DimStudentSection] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([StudentSectionKey]) ON [PRIMARY]
+GO

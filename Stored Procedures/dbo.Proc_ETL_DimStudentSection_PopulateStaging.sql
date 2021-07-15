@@ -82,7 +82,7 @@ BEGIN
 			
 		--declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT 
-		    CONCAT_WS('|','Ed-Fi',ssa.StudentUSI,ssa.SchoolId,ssa.LocalCourseCode,ssa.SchoolYear,ssa.UniqueSectionCode,td.CodeValue ) [_sourceKey],
+		    CONCAT_WS('|','Ed-Fi',ssa.StudentUSI,ssa.SchoolId,ssa.LocalCourseCode,ssa.SchoolYear,ssa.UniqueSectionCode,td.CodeValue,CONVERT(NVARCHAR, ssa.BeginDate, 112) ) [_sourceKey],			
 			ds.StudentKey,
 			dschool.SchoolKey,
 			dc.CourseKey,
