@@ -57,6 +57,7 @@ BEGIN
 					   ValidFrom,
 					   ValidTo,
 					   IsCurrent,
+					   IsLatest,
 				       LineageKey
 				   )
 				   VALUES
@@ -84,15 +85,40 @@ BEGIN
 				       '07/01/2015', -- ValidFrom - datetime
 					   '9999-12-31', -- ValidTo - datetime
 					   0,      -- IsCurrent - bit
-					   -1          -- LineageKey - int
+					   1,      -- IsLatest - bit
+					   -1      -- LineageKey - int
 				       )
 				  
 				END
+        --updating keys
+		UPDATE t
+		SET t.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE t._sourceSchoolKey = ds._sourceKey									
+										AND t.ValidFrom >= ds.[ValidFrom]
+										AND t.ValidFrom < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE ds._sourceKey = '')
+							      ) 
+        FROM Staging.DisciplineIncident t;
+
+		--updating school names
+		UPDATE di
+		SET [ShortNameOfInstitution] = ds.ShortNameOfInstitution,
+		    [NameOfInstitution] = ds.NameOfInstitution
+		FROM Staging.DisciplineIncident di
+		     INNER JOIN dbo.DimSchool ds ON di.SchoolKey = ds.SchoolKey;
+
+	     
 
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified		
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].[DimDisciplineIncident] AS prod
 			INNER JOIN Staging.DisciplineIncident AS stage ON prod._sourceKey = stage._sourceKey
@@ -125,6 +151,7 @@ BEGIN
 		    [ValidFrom],
 		    [ValidTo],
 		    [IsCurrent],
+			[IsLatest],
 			LineageKey
 		)
 		
@@ -153,6 +180,7 @@ BEGIN
 			[ValidFrom],
 		    [ValidTo],
 		    [IsCurrent],
+			1 AS [IsLatest],
 		    @LineageKey
 		FROM Staging.DisciplineIncident
 

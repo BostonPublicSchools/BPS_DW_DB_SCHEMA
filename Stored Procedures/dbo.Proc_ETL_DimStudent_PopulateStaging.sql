@@ -26,104 +26,111 @@ BEGIN
 
 	BEGIN TRY
 
-		--BEGIN TRANSACTION;   
-
+		
 		TRUNCATE TABLE Staging.[Student]
 
 		--DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
 		SELECT DISTINCT s.StudentUSI INTO #StudentsWithChanges
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s		      
-		      INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa ON s.StudentUSI = ssa.StudentUSI
+		FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s		      
+		      INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa ON s.StudentUSI = ssa.StudentUSI
         WHERE  ssa.SchoolYear >= 2019 AND
 			   (
 				(s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) OR
-				(ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)			 
-			   )
+				(ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)						
+			   )			 
+		
 
-		--DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
+
+		
 		SELECT DISTINCT 
-			   s.StudentUSI, 
+			   s.StudentUSI,			   
 			   COUNT(sr.StudentUSI) AS RaceCount,
-			   STRING_AGG(rt.CodeValue,',') AS RaceCodes,
-			   STRING_AGG(rt.Description,',') AS RaceDescriptions,
+			   STRING_AGG(d.CodeValue,',') AS RaceCodes,
+			   STRING_AGG(d.Description,',') AS RaceDescriptions,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 1) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'American Indian - Alaska Native') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_AmericanIndianAlaskanNative_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 2) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'Asian') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_Asian_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 3) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'Black - African American') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_BlackAfricaAmerican_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 5) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'Native Hawaiian - Pacific Islander') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_NativeHawaiianPacificIslander_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 7) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'White') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_White_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 4) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'Choose Not to Respond') THEN 1
 			   ELSE 
 				   0	             
 			   END AS Race_ChooseNotRespond_Indicator,
 			   CASE WHEN EXISTS (SELECT 1 
-								 FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr
-									   WHERE s.StudentUSI = sr.StudentUSI
-										 AND sr.RaceTypeId = 6) THEN 1
+								 FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr 
+			                          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId
+								 WHERE s.StudentUSI = sr.StudentUSI
+								 AND d.CodeValue = 'Other') THEN 1
 			   ELSE 
 				   0	             
-			   END AS Race_Other_Indicator into #StudentRaces    
-
-		FROM  #StudentsWithChanges s     	
-			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentRace sr ON s.StudentUSI = sr.StudentUSI		
-			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.RaceType rt ON sr.RaceTypeId = rt.RaceTypeId	   
+			   END AS Race_Other_Indicator  into #StudentRaces    
+        --select * 
+		FROM  #StudentsWithChanges s
+			  LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationRace sr  ON s.StudentUSI = sr.StudentUSI		
+			  LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON sr.RaceDescriptorId = d.DescriptorId	    
 		GROUP BY s.StudentUSI
-				
-				
-		--;WITH StudentHomeRooomByYear AS
-		--(
+			
+			
+		 
+		;WITH StudentHomeRooomByYear AS
+		(
 			SELECT DISTINCT std_sa.StudentUSI, 
 							std_sa.SchoolYear, 
 							std_sa.SchoolId,  
-							std_sa.ClassroomIdentificationCode AS HomeRoom,
+							std_sa.LocalCourseCode AS HomeRoom,
 							dbo.Func_ETL_GetFullName(staff.FirstName,staff.MiddleName,staff.LastSurname) AS HomeRoomTeacher,
 							ROW_NUMBER() OVER (PARTITION BY std_sa.StudentUSI, 
 															std_sa.SchoolYear, 
-															std_sa.SchoolId ORDER BY staff_sa.BeginDate DESC) AS RowRankId INTO #StudentHomeRooomByYear
-			FROM #StudentsWithChanges s
-			     INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation std_sa ON s.StudentUSI = std_sa.StudentUSI			
-				 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa  ON std_sa.UniqueSectionCode = staff_sa.UniqueSectionCode
+															std_sa.SchoolId ORDER BY staff_sa.BeginDate DESC) AS RowRankId 
+			FROM  #StudentsWithChanges s
+			      INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation std_sa ON s.StudentUSI = std_sa.StudentUSI			
+				  INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa  ON std_sa.SectionIdentifier = staff_sa.SectionIdentifier
 																										AND std_sa.SchoolYear = staff_sa.SchoolYear
-				 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Staff staff on staff_sa.StaffUSI = staff.StaffUSI
+				 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff staff on staff_sa.StaffUSI = staff.StaffUSI
 			WHERE std_sa.HomeroomIndicator = 1
 				 AND std_sa.SchoolYear >= 2019
-				 AND std_sa.EndDate > GETDATE()
-				 --AND s.StudentUniqueId = 269159 
-				
-					 
-        --)
+				 AND std_sa.EndDate > GETDATE()				 
+        )
+			
 		
 		INSERT INTO Staging.[Student]
 				   ([_sourceKey]
@@ -151,6 +158,7 @@ BEGIN
 				   ,[SexType_Description]
 				   ,[SexType_Male_Indicator]
 				   ,[SexType_Female_Indicator]
+				   ,[SexType_NonBinary_Indicator]
 				   ,[SexType_NotSelected_Indicator]
 				   ,[RaceCode]
 				   ,[RaceDescription]
@@ -182,25 +190,31 @@ BEGIN
 				   ,[ExitWithdrawSchoolYear]
 				   ,[ExitWithdrawCode]	   
 
-				   
 				   ,StudentMainInfoModifiedDate
 	               ,StudentSchoolAssociationModifiedDate
+                   
+				   ,[_sourceSchoolKey]
 
 				   ,[ValidFrom]
 				   ,[ValidTo]
 				   ,[IsCurrent])
-        --DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
-		SELECT distinct
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StudentUSI)) AS [_sourceKey],
-			   sem.ElectronicMailAddress AS [PrimaryElectronicMailAddress],
-			   emt.CodeValue AS [PrimaryElectronicMailTypeDescriptor_CodeValue],
-			   emt.Description AS [PrimaryElectronicMailTypeDescriptor_Description],
+		--DECLARE @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate();
+        SELECT distinct
+			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StudentUniqueId)) AS [_sourceKey],
+			   seoae.ElectronicMailAddress AS [PrimaryElectronicMailAddress],
+			   seoae_d.CodeValue AS [PrimaryElectronicMailTypeDescriptor_CodeValue],
+			   seoae_d.Description AS [PrimaryElectronicMailTypeDescriptor_Description],
 			   s.StudentUniqueId,       
-			   sic.IdentificationCode AS StateId,
+			   (SELECT TOP 1  sic.IdentificationCode 
+			    FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociationStudentIdentificationCode sic 
+			          INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor sicd ON sic.[StudentIdentificationSystemDescriptorId] = sicd.DescriptorId
+																					AND sicd.CodeValue = 'State'
+				WHERE  s.StudentUSI = sic.StudentUSI
+			    ) AS StateId,
        
-			   dschool.SchoolKey,
-			   edorg.ShortNameOfInstitution,
-			   edorg.NameOfInstitution,
+			   NULL AS SchoolKey,
+			   NULL AS ShortNameOfInstitution,
+			   NULL AS NameOfInstitution,
 			   gld.CodeValue GradeLevelDescriptor_CodeValue,
 			   gld.Description AS GradeLevelDescriptor_Description,
 
@@ -217,66 +231,69 @@ BEGIN
 			   COALESCE(shrby.HomeroomTeacher,'N/A') AS HomerHomeroomTeacheroom,
 			   
 			   CASE 
-					WHEN sex.CodeValue  = 'Male' THEN 'M'
-					WHEN sex.CodeValue  = 'Female' THEN 'F'
+					WHEN sexd.CodeValue  = 'Male' THEN 'M'
+					WHEN sexd.CodeValue  = 'Female' THEN 'F'
+					WHEN sexd.CodeValue  = 'NB' THEN 'Non-Binary' -- todo: update code when BPS is ready
 					ELSE 'NS' -- not selected
 			   END AS SexType_Code,
-			   sex.Description AS SexType_Description,
-			   CASE WHEN sex.CodeValue  = 'Male' THEN 1 ELSE 0 END AS SexType_Male_Indicator,
-			   CASE WHEN sex.CodeValue  = 'Female' THEN 1 ELSE 0 END AS SexType_Female_Indicator,
-			   CASE WHEN sex.CodeValue  = 'Not Selected' THEN 1 ELSE 0 END AS SexType_NotSelected_Indicator, 
-       
+			   COALESCE(sexd.Description,'Not Selected') AS SexType_Description,
+			   CASE WHEN sexd.CodeValue  = 'Male' THEN 1 ELSE 0 END AS SexType_Male_Indicator,
+			   CASE WHEN sexd.CodeValue  = 'Female' THEN 1 ELSE 0 END AS SexType_Female_Indicator,
+			   CASE WHEN sexd.CodeValue = 'NB' THEN 1 ELSE 0 END AS SexType_NonBinary_Indicator, -- todo: update code when BPS is ready
+			   CASE WHEN sexd.CodeValue  = 'Not Selected' THEN 1 ELSE 0 END AS SexType_NotSelected_Indicator,                
 			   COALESCE(sr.RaceCodes,'N/A') AS RaceCode,	   
 			   COALESCE(sr.RaceDescriptions,'N/A') AS RaceDescription,
-			   CASE WHEN sr.RaceCount > 1 AND s.HispanicLatinoEthnicity = 0 THEN 'Multirace' 
-					WHEN s.HispanicLatinoEthnicity = 1 THEN 'Latinx'
+			   CASE WHEN sr.RaceCount > 1 AND COALESCE(seoa.HispanicLatinoEthnicity,0) = 0 THEN 'Multirace' 
+					WHEN seoa.HispanicLatinoEthnicity = 1 THEN 'Latinx'
 					ELSE COALESCE(sr.RaceCodes,'N/A')
 			   END AS StateRaceCode,
+
 			   COALESCE(sr.Race_AmericanIndianAlaskanNative_Indicator,0) AS Race_AmericanIndianAlaskanNative_Indicator,
 			   COALESCE(sr.Race_Asian_Indicator,0) AS Race_Asian_Indicator ,
 			   COALESCE(sr.Race_BlackAfricaAmerican_Indicator,0) AS Race_BlackAfricaAmerican_Indicator ,
 			   COALESCE(sr.Race_NativeHawaiianPacificIslander_Indicator,0) AS Race_NativeHawaiianPacificIslander_Indicator ,
 			   COALESCE(sr.Race_White_Indicator,0) AS Race_White_Indicator ,
-
-			   CASE WHEN sr.RaceCount > 1 AND s.HispanicLatinoEthnicity = 0 THEN 1 ELSE 0 END AS Race_MultiRace_Indicator, 
+			   
+			   
+			   CASE WHEN sr.RaceCount > 1 AND COALESCE(seoa.HispanicLatinoEthnicity,0) = 0 THEN 1 ELSE 0 END AS Race_MultiRace_Indicator, 
 			   sr.Race_ChooseNotRespond_Indicator,
 			   sr.Race_Other_Indicator,
 
-			   CASE WHEN s.HispanicLatinoEthnicity = 1 THEN 'L' ELSE 'Non-L' END  AS EthnicityCode,
-			   CASE WHEN s.HispanicLatinoEthnicity = 1 THEN 'Latinx' ELSE 'Non Latinx' END  AS EthnicityDescription,
-			   s.HispanicLatinoEthnicity AS EthnicityHispanicLatino_Indicator,
+			   CASE WHEN seoa.HispanicLatinoEthnicity = 1 THEN 'L' ELSE 'Non-L' END  AS EthnicityCode,
+			   CASE WHEN seoa.HispanicLatinoEthnicity = 1 THEN 'Latinx' ELSE 'Non Latinx' END  AS EthnicityDescription,
+			   COALESCE(seoa.HispanicLatinoEthnicity,0) AS EthnicityHispanicLatino_Indicator,
 
 			   CASE WHEN EXISTS (
-							   SELECT 1
-							   FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentProgramAssociation spa
-							   WHERE CHARINDEX('Migrant', spa.ProgramName,1) > 1
-									 AND spa.StudentUSI = s.StudentUSI
-									 AND (
-									         spa.EndDate IS NULL
-									      OR spa.EndDate > CAST(GETDATE() AS DATE)
-									     )
-						   ) THEN 1 ELSE 0 End AS Migrant_Indicator,
+								   SELECT 1
+								   FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.[StudentProgramAssociationService] spas
+										INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON spas.ProgramTypeDescriptorId = d.DescriptorId 
+																											   AND CHARINDEX('Migrant', d.CodeValue ,1) > 1
+								   WHERE spas.StudentUSI = s.StudentUSI									 
+										 AND GETDATE() BETWEEN spas.BeginDate AND COALESCE(spas.ServiceEndDate,'12/31/9999')
+							   ) THEN 1 ELSE 0 End AS Migrant_Indicator,
 			   CASE WHEN EXISTS (
-							   SELECT 1
-							   FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentProgramAssociation spa
-							   WHERE CHARINDEX('Homeless', spa.ProgramName,1) > 1
-									 AND spa.StudentUSI = s.StudentUSI
-									  AND (
-									         spa.EndDate IS NULL
-									      OR spa.EndDate > CAST(GETDATE() AS DATE)
-									     )
-									 AND spa.EndDate IS NULL
+							       SELECT 1
+								   FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.[StudentProgramAssociationService] spas
+										INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d ON spas.ProgramTypeDescriptorId = d.DescriptorId 
+																											   AND CHARINDEX('Homeless', d.CodeValue ,1) > 1
+								   WHERE spas.StudentUSI = s.StudentUSI									 
+										 AND GETDATE() BETWEEN spas.BeginDate AND COALESCE(spas.ServiceEndDate,'12/31/9999')
 						   ) THEN 1 ELSE 0 End AS Homeless_Indicator,
-				CASE WHEN EXISTS (
-							   SELECT 1
-							   FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSpecialEducationProgramAssociation spa
-							   WHERE CHARINDEX('504 Plan', spa.ProgramName,1) = 0
-									 AND spa.StudentUSI = s.StudentUSI
-									 AND (
-									         spa.IEPEndDate IS NULL
-									      OR spa.IEPEndDate > CAST(GETDATE() AS DATE)
-									     )
-						   ) THEN 1 ELSE 0 End AS IEP_Indicator,
+			   CASE WHEN EXISTS (  SELECT 1
+										FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSpecialEducationProgramAssociationSpecialEducationProgramService spas
+											INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d
+												ON spas.ProgramTypeDescriptorId = d.DescriptorId
+												   AND CHARINDEX('504 Plan', d.CodeValue, 1) = 0
+											INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[studentindividualeducationplan].[StudentSpecialEducationProgramAssociationExtension] sspe
+												ON sspe.StudentUSI = spas.StudentUSI
+												   AND spas.ProgramEducationOrganizationId = sspe.ProgramEducationOrganizationId
+												   AND spas.ProgramName = sspe.ProgramName
+												   AND spas.ProgramTypeDescriptorId = sspe.ProgramTypeDescriptorId
+												   AND spas.BeginDate = sspe.BeginDate
+										WHERE spas.StudentUSI = s.StudentUSI
+											  AND GETDATE()
+											  BETWEEN spas.BeginDate AND COALESCE(spas.ServiceEndDate, '12/31/9999')
+											  AND sspe.IEPExitDate IS NULL) THEN 1 ELSE 0 END AS IEP_Indicator,
 	   
 			   COALESCE(lepd.CodeValue,'N/A') AS LimitedEnglishProficiencyDescriptor_CodeValue,
 			   COALESCE(lepd.CodeValue,'N/A') AS LimitedEnglishProficiencyDescriptor_Description,
@@ -284,23 +301,28 @@ BEGIN
 			   CASE WHEN COALESCE(lepd.CodeValue,'N/A') = 'Formerly Limited' THEN 1 ELSE 0 END AS LimitedEnglishProficiency_Former_Indicator,
 			   CASE WHEN COALESCE(lepd.CodeValue,'N/A') = 'NotLimited' THEN 1 ELSE 0 END AS LimitedEnglishProficiency_NotEnglisLearner_Indicator,
 
-			   COALESCE(s.EconomicDisadvantaged,0) AS EconomicDisadvantage_Indicator,
-	   
+			   --COALESCE(s.EconomicDisadvantaged,0) AS EconomicDisadvantage_Indicator,
+			   0 AS EconomicDisadvantage_Indicator, -- todo:review with bps team. Reviewed with BPS team and this is still pending. -- 
+			   --StudentEducationOrganizationAssociation, StudentEducationOrganizationAssociationStudentCharacteristic,  
+			   --SELECT * FROM edfi.Descriptor WHERE Namespace like '%uri://ed-fi.org/StudentCharacteristicDescriptor%'
+	
+
 			   --entry
 			   ssa.EntryDate,
 			   dbo.Func_ETL_GetSchoolYear((ssa.EntryDate)) AS EntrySchoolYear, 
-			   COALESCE(eglrt.CodeValue,'N/A') AS EntryCode,
+			   COALESCE(eglrtd.CodeValue,'N/A') AS EntryCode,
        
 			   --exit
 			   ssa.ExitWithdrawDate,
 			   dbo.Func_ETL_GetSchoolYear((ssa.ExitWithdrawDate)) AS ExitWithdrawSchoolYear, 
-			   ewt.CodeValue ExitWithdrawCode,              
+			   ewtdd.CodeValue ExitWithdrawCode,              
 
 			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(s.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolCategoryModifiedDate,
 			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(ssa.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS SchoolTitle1StatusModifiedDate,
 
+			   CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),ssa.SchoolId)) AS [_sourceSchoolKey],
 				
-				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
+			   CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
                              (VALUES
                                (s.LastModifiedDate)
@@ -309,55 +331,56 @@ BEGIN
                            )
 					ELSE 
 					      ssa.EntryDate
-				END AS ValidFrom,
-			   CASE when ssa.ExitWithdrawDate is null then '12/31/9999'  else ssa.ExitWithdrawDate END  AS ValidTo,
-			   case when ssa.ExitWithdrawDate is NULL AND EXISTS(SELECT 1 FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolYearType syt WHERE syt.CurrentSchoolYear = 1 AND syt.SchoolYear = ssa.SchoolYear) then 1 else 0 end AS IsCurrent
-			   	
-		--select ssa.SchoolYear, ssa.ExitWithdrawDate , case  when ssa.ExitWithdrawDate is NULL and EXISTS(SELECT 1 FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolYearType syt WHERE syt.CurrentSchoolYear = 1 AND syt.SchoolYear = ssa.SchoolYear)   then 1 else 0 end 
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student s
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa ON s.StudentUSI = ssa.StudentUSI
-			INNER JOIN dbo.DimSchool dschool ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),ssa.SchoolId)   = dschool._sourceKey
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor gld  ON ssa.EntryGradeLevelDescriptorId = gld.DescriptorId			
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EducationOrganization edorg ON ssa.SchoolId = edorg.EducationOrganizationId
-
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.EntryGradeLevelReasonType eglrt ON ssa.EntryGradeLevelReasonTypeId = eglrt.EntryGradeLevelReasonTypeId
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ExitWithdrawTypeDescriptor ewtd ON ssa.ExitWithdrawTypeDescriptorId = ewtd.ExitWithdrawTypeDescriptorId
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor ewtdd ON ewtd.ExitWithdrawTypeDescriptorId = ewtdd.DescriptorId
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ExitWithdrawType ewt ON ewtd.ExitWithdrawTypeId = ewt.ExitWithdrawTypeId
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentElectronicMail sem ON s.StudentUSI = sem.StudentUSI
-																		   AND sem.PrimaryEmailAddressIndicator = 1
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ElectronicMailType emt ON sem.ElectronicMailTypeId = emt.ElectronicMailTypeId
+			   END AS ValidFrom,
+			   CASE WHEN ssa.ExitWithdrawDate is NULL OR ssa.ExitWithdrawDate >= GETDATE() then '12/31/9999'  else ssa.ExitWithdrawDate END  AS ValidTo,
+			   CASE WHEN (ssa.ExitWithdrawDate is NULL OR ssa.ExitWithdrawDate >= GETDATE()) 
+			             AND 
+						 EXISTS(SELECT 1 
+						        FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.SchoolYearType syt 
+								WHERE syt.CurrentSchoolYear = 1 
+								  AND syt.SchoolYear = ssa.SchoolYear) then 1 
+                     ELSE 0 
+			   END AS IsCurrent
+			   
+		--select distinct s.StudentUSI,*
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s
+		    INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentEducationOrganizationAssociation seoa ON s.StudentUSI = seoa.StudentUSI		    
+			INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa ON s.StudentUSI = ssa.StudentUSI		    
+			INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor gld  ON ssa.EntryGradeLevelDescriptorId = gld.DescriptorId		
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor eglrtd ON ssa.[EntryGradeLevelReasonDescriptorId] = eglrtd.DescriptorId
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.ExitWithdrawTypeDescriptor ewtd ON ssa.ExitWithdrawTypeDescriptorId = ewtd.ExitWithdrawTypeDescriptorId
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor ewtdd ON ewtd.ExitWithdrawTypeDescriptorId = ewtdd.DescriptorId
 			
-
-			--lunch
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor food ON s.SchoolFoodServicesEligibilityDescriptorId = food.DescriptorId
-			--sex
-			INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SexType sex ON s.SexTypeId = sex.SexTypeId
-			--state id
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentIdentificationCode sic ON s.StudentUSI = sic.StudentUSI
-																							   AND sic.AssigningOrganizationIdentificationCode = 'State' 
-			--lep
-			LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor lepd ON s.LimitedEnglishProficiencyDescriptorId = lepd.DescriptorId
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].[StudentEducationOrganizationAssociationElectronicMail] seoae ON s.StudentUSI = seoae.StudentUSI
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor seoae_d ON seoae.ElectronicMailTypeDescriptorId = seoae_d.DescriptorId 
+			                                                                             AND seoae_d.CodeValue = 'Primary' 																		   
 	
+			INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganization edorg ON ssa.SchoolId = edorg.EducationOrganizationId
+						
+			--sex
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor sexd ON seoa.SexDescriptorId = sexd.DescriptorId
+
+			
+			--lep
+			LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor lepd ON seoa.LimitedEnglishProficiencyDescriptorId = lepd.DescriptorId 
+
 			--races
-			LEFT JOIN #StudentRaces sr ON s.StudentUSI = sr.StudentUSI
+			LEFT JOIN #StudentRaces sr ON s.StudentUSI = sr.StudentUsi
 			
 			--homeroom
-			LEFT JOIN #StudentHomeRooomByYear shrby ON  s.StudentUSI = shrby.StudentUSI
+			LEFT JOIN StudentHomeRooomByYear shrby ON  s.StudentUSI = shrby.StudentUSI
 												   AND ssa.SchoolId = shrby.SchoolId
 												   AND ssa.SchoolYear = shrby.SchoolYear
 												   AND shrby.RowRankId = 1
 	
-		WHERE ssa.SchoolYear >= 2019 AND
+		WHERE ssa.SchoolYear >= 2019 and
 		     (
 			   (s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate) OR
 			   (ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)			 
 			 )
 			 
-		DROP TABLE #StudentRaces, #StudentHomeRooomByYear, #StudentsWithChanges;
+		DROP TABLE #StudentRaces, #StudentsWithChanges;
 				
-			
-			
 		--loading legacy data if it has not been loaded.
 		--load types are ignored as this data will only be loaded once.
 		IF NOT EXISTS(SELECT 1 
@@ -406,6 +429,7 @@ BEGIN
 				   ,[SexType_Description]
 				   ,[SexType_Male_Indicator]
 				   ,[SexType_Female_Indicator]
+				   ,[SexType_NonBinary_Indicator]
 				   ,[SexType_NotSelected_Indicator]
 				   ,[RaceCode]
 				   ,[RaceDescription]
@@ -441,6 +465,8 @@ BEGIN
 				   ,StudentMainInfoModifiedDate
 	               ,StudentSchoolAssociationModifiedDate
 
+				   ,[_sourceSchoolKey]
+
 				   ,[ValidFrom]
 				   ,[ValidTo]
 				   ,[IsCurrent])
@@ -453,9 +479,9 @@ BEGIN
 						s.StudentNo AS [StudentUniqueId],       
 						s.sasid AS StateId,
        
-						dschool.SchoolKey,
-						dschool.ShortNameOfInstitution,
-						dschool.NameOfInstitution,
+						NULL AS SchoolKey,
+						edorg.ShortNameOfInstitution,
+						edorg.NameOfInstitution,
 						s.Grade as GradeLevelDescriptor_CodeValue,
 						s.Grade as GradeLevelDescriptor_Description,
 
@@ -479,10 +505,12 @@ BEGIN
 						CASE 
 							WHEN s.Sex = 'M' THEN 'Male'
 							WHEN s.Sex = 'F' THEN 'Female'
+							WHEN s.Sex = 'NB' THEN 'Non-Binary'
 							ELSE 'Not Selected' -- not selected
 						END AS SexType_Description,
 						CASE WHEN s.Sex = 'M' THEN 1 ELSE 0 END AS SexType_Male_Indicator,
-						CASE WHEN s.Sex = 'F' THEN 1 ELSE 0 END AS SexType_Female_Indicator,
+						CASE WHEN s.Sex = 'F' THEN 1 ELSE 0 END AS SexType_Female_Indicator, 
+						CASE WHEN s.Sex = 'NB' THEN 1 ELSE 0 END AS SexType_NonBinary_Indicator, -- todo: update code when BPS is ready
 						CASE WHEN s.Sex not in ( 'M','F') THEN 1 ELSE 0 END AS SexType_NotSelected_Indicator, -- NON BINARY
 
 						CASE WHEN sdir.IsNatAmer = 1 THEN 'American Indian - Alaskan Native'
@@ -560,6 +588,8 @@ BEGIN
 						'07/01/2015' AS SchoolCategoryModifiedDate,
 						'07/01/2015' AS SchoolTitle1StatusModifiedDate,
 
+						CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.sch)) AS [_sourceSchoolKey],
+
 						CASE WHEN MONTH(s.entdate) >= 7 THEN 
 								DATEADD(YEAR,s.schyear  - YEAR(s.entdate),s.entdate)
 							ELSE 
@@ -573,19 +603,16 @@ BEGIN
 				--select distinct top 1000 *
 				FROM [BPSGranary02].[BPSDW].[dbo].[student] s 
 					--WHERE schyear IN (2017,2016,2015) AND s.StudentNo = '210191' ORDER BY s.StudentNo, s.entdate
-						INNER JOIN [BPSGranary02].[RAEDatabase].[dbo].[studentdir] sdir ON s.StudentNo = sdir.studentno
-						INNER JOIN dbo.DimSchool dschool ON  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.sch))  = dschool._sourceKey	 
+						INNER JOIN [BPSGranary02].[RAEDatabase].[dbo].[studentdir] sdir ON s.StudentNo = sdir.studentno		
+						INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganization edorg ON s.sch = edorg.EducationOrganizationId
 						LEFT JOIN HomelessStudentsByYear hsby ON s.StudentNo = hsby.studentno 
 															and s.schyear = hsby.schyear
 				WHERE s.schyear IN (2017,2016,2015)
 						and s.sch between '1000' and '4700'
 				ORDER BY s.StudentNo;
-
 			END
 
 			
-
-		--COMMIT TRANSACTION;		
 	END TRY
 	BEGIN CATCH
 		
@@ -607,19 +634,7 @@ BEGIN
 		-- If -1, the transaction is uncommittable and should be rolled back.
 		-- XACT_STATE = 0 means that there is no transaction and a commit or rollback operation would generate an error.
 
-		---- Test whether the transaction is uncommittable.
-		--IF XACT_STATE( ) = -1
-		--	BEGIN
-		--		--The transaction is in an uncommittable state. Rolling back transaction
-		--		ROLLBACK TRANSACTION;
-		--	END;
-
-		---- Test whether the transaction is committable.
-		--IF XACT_STATE( ) = 1
-		--	BEGIN
-		--		--The transaction is committable. Committing transaction
-		--		COMMIT TRANSACTION;
-		--	END;
+	
 	END CATCH;
 END;
 GO

@@ -28,34 +28,45 @@ BEGIN
 
 		--updating staging keys
 		UPDATE s 
-		SET s.StudentKey = (
-								SELECT TOP (1) ds.StudentKey
-								FROM dbo.DimStudent ds
-								WHERE s._sourceStudentKey = ds._sourceKey									
-									AND s.[ModifiedDate] >= ds.[ValidFrom]
-									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
-							),
-			s.SchoolKey = (
-								SELECT TOP (1) ds.SchoolKey
-								FROM dbo.DimSchool ds
-								WHERE s._sourceSchoolKey = ds._sourceKey									
-									AND s.[ModifiedDate] >= ds.[ValidFrom]
-									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
-							),
-			s.CourseKey = (
-								SELECT TOP (1) dc.CourseKey
-								FROM dbo.DimCourse dc
-								WHERE s._sourceCourseKey = dc._sourceKey									
-									AND s.[ModifiedDate] >= dc.[ValidFrom]
-									AND s.[ModifiedDate] < dc.[ValidTo]
-								ORDER BY dc.[ValidFrom] DESC
-							)													             
+		SET s.StudentKey = COALESCE(
+									(SELECT TOP (1) ds.StudentKey
+									 FROM dbo.DimStudent ds
+									 WHERE s._sourceStudentKey = ds._sourceKey									
+										AND s.[ModifiedDate] >= ds.[ValidFrom]
+										AND s.[ModifiedDate] < ds.[ValidTo]
+									 ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.StudentKey
+									 FROM dbo.DimStudent ds
+									 WHERE ds._sourceKey = '')
+							       ),
+			s.SchoolKey = COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									FROM dbo.DimSchool ds
+									WHERE s._sourceSchoolKey = ds._sourceKey									
+										AND s.[ModifiedDate] >= ds.[ValidFrom]
+										AND s.[ModifiedDate] < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+										FROM dbo.DimSchool ds
+										WHERE ds._sourceKey = '')
+							      ),	
+			s.CourseKey = COALESCE(
+									(SELECT TOP (1) dc.CourseKey
+									FROM dbo.DimCourse dc
+									WHERE s._sourceSchoolKey = dc._sourceKey									
+										AND s.[ModifiedDate] >= dc.[ValidFrom]
+										AND s.[ModifiedDate] < dc.[ValidTo]
+									ORDER BY dc.[ValidFrom] DESC),
+									(SELECT dc.CourseKey
+										FROM dbo.DimCourse dc
+										WHERE dc._sourceKey = '')
+							      )												             
         FROM Staging.StudentCourseTranscript s;
+
 
 		--updating the timeKey
 		--this is a special case since we need the min date term
+		--found that some schools have the terms repeated
 		;WITH SchoolTermsFirstDates AS 
 			(
 			  SELECT DISTINCT dt.SchoolKey, 
@@ -86,15 +97,31 @@ BEGIN
 												   AND dt.SchoolDate = std.MinTermDate )
 							ORDER BY dt.SchoolDate )
          FROM Staging.StudentCourseTranscript s;
-
-
-		DELETE FROM Staging.StudentCourseTranscript
-		--select * FROM Staging.StudentCourseTranscript
-		WHERE StudentKey IS NULL OR 
-		      TimeKey IS NULL OR
-			  SchoolKey IS NULL OR
-			  CourseKey IS NULL;
 		
+
+		--we don't have a date associate with the newly identified staging records 
+		--we cannot default unknown TimeKey to specific dates
+		--these must be bad records. Deleting...
+		DELETE FROM Staging.StudentCourseTranscript 
+		WHERE TimeKey IS null
+
+		;WITH DuplicateKeys AS 
+		(
+		  SELECT [StudentKey], [TimeKey],[SchoolKey],[CourseKey]
+		  FROM  Staging.StudentCourseTranscript
+		  GROUP BY [StudentKey], [TimeKey],[SchoolKey],[CourseKey]
+		  HAVING COUNT(*) > 1
+		)
+		
+		DELETE sd 
+		FROM Staging.StudentCourseTranscript sd
+		WHERE EXISTS(SELECT 1 
+		             FROM DuplicateKeys dk 
+					 WHERE sd.[StudentKey] = dk.StudentKey
+					   AND sd.[TimeKey] = dk.[TimeKey]
+					   AND sd.[SchoolKey] = dk.[SchoolKey]
+					   AND sd.CourseKey = dk.CourseKey)
+
 		--dropping the columnstore index
         DROP INDEX IF EXISTS CSI_FactStudentCourseTranscript ON dbo.FactStudentCourseTranscript;		   
 
@@ -115,7 +142,7 @@ BEGIN
 						,PossibleCredits 
 						,FinalLetterGradeEarned
 						,FinalNumericGradeEarned
-						,[LineageKey])
+						,LineageKey)
 		SELECT DISTINCT 
 		      [_sourceKey]
 			 ,[StudentKey]
@@ -126,7 +153,7 @@ BEGIN
 			 ,PossibleCredits 
 			 ,FinalLetterGradeEarned
 			 ,FinalNumericGradeEarned
-			 ,@LineageKey AS [LineageKey]
+			 ,@LineageKey AS LineageKey
         FROM Staging.StudentCourseTranscript
 		
 		IF (NOT EXISTS(SELECT 1  
@@ -154,7 +181,7 @@ BEGIN
 							,PossibleCredits 
 							,FinalLetterGradeEarned
 							,FinalNumericGradeEarned
-							,[LineageKey])
+							,LineageKey)
 		    
 				SELECT DISTINCT
 						'LegacyDW',
@@ -172,7 +199,7 @@ BEGIN
 						END AS FinalLetterGradeEarned,
 						CASE WHEN TRY_CAST(scg.FinalMark AS DECIMAL) IS NOT NULL THEN scg.FinalMark ELSE NULL END AS FinalNumericGradeEarned,
 						--dt.SchoolDate, *
-						@lineageKey AS [LineageKey]
+						@lineageKey AS LineageKey
 				--select *  
 				FROM [BPSGranary02].[RAEDatabase].[dbo].[StudentCourseGrade_aspenNewFormat] scg
     
@@ -233,14 +260,14 @@ BEGIN
 			,[PossibleCredits]
 			,[FinalLetterGradeEarned]
 			,[FinalNumericGradeEarned]
-			,[LineageKey])
+			,LineageKey)
 			
 		-- updating the EndTime to now and status to Success		
 		UPDATE dbo.ETL_Lineage
 		SET 
 			EndTime = SYSDATETIME(),
 			Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

@@ -3,7 +3,6 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
 --Fact StudentDiscipline
 ----------------------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_FactStudentDiscipline_PopulateStaging] 
@@ -45,19 +44,20 @@ BEGIN
 		)
 		
 		SELECT DISTINCT 
-		       CONCAT_WS('|',Convert(NVARCHAR(MAX),sdia.StudentUSI),di.IncidentIdentifier) AS _sourceKey,
+		       CONCAT_WS('|',s.StudentUniqueId,di.IncidentIdentifier) AS _sourceKey,
 			   NULL AS StudentKey,
 			   NULL AS TimeKey,	  
 			   NULL AS SchoolKey,  
 			   NULL AS DisciplineIncidentKey,  
 			   di.IncidentDate AS ModifiedDate,
-			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sdia.StudentUSI)) AS _sourceStudentKey,
+			   CONCAT_WS('|','Ed-Fi',s.StudentUniqueId) AS _sourceStudentKey,
 		       di.IncidentDate AS _sourceTimeKey,		          
 			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),di.SchoolId))  AS _sourceSchoolKey,
 		       CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),di.IncidentIdentifier))  AS  _sourceDisciplineIncidentKey
 
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
-			  INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentDisciplineIncidentAssociation sdia ON di.IncidentIdentifier = sdia.IncidentIdentifier
+		FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
+			  INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentDisciplineIncidentAssociation sdia ON di.IncidentIdentifier = sdia.IncidentIdentifier
+			  INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s ON sdia.StudentUSI = s.StudentUSI
 		WHERE di.IncidentDate >= '07/01/2018'	  
 		 AND  (
 		       (di.LastModifiedDate > @LastLoadDate  AND di.LastModifiedDate <= @NewLoadDate)

@@ -25,16 +25,35 @@ BEGIN
 	    
 		BEGIN TRANSACTION;   
 		
+		--updating staging keys
+		UPDATE t
+		SET t.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE t._sourceSchoolKey = ds._sourceKey									
+										AND t.ValidFrom >= ds.[ValidFrom]
+										AND t.ValidFrom < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE ds._sourceKey = '')
+							      ) 
+        --select *
+		FROM Staging.[Time] t
+		WHERE t._sourceSchoolKey IS NOT NULL; -- schools are not always required
+
+		
 		
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].[DimTime] AS prod
 			INNER JOIN Staging.[Time] AS stage ON prod.SchoolDate = stage.SchoolDate
 		WHERE prod.ValidTo = '12/31/9999'
-
+		
 		INSERT INTO dbo.DimTime
 		(
 		    [SchoolDate]
@@ -79,7 +98,8 @@ BEGIN
            ,[ValidFrom]
            ,[ValidTo]
            ,[IsCurrent]
-           ,[LineageKey]
+		   ,[IsLatest]
+           ,LineageKey
 		)
 		SELECT 
 		    st.[SchoolDate]
@@ -113,7 +133,7 @@ BEGIN
            ,st.[LeapYear_Indicator]
            ,st.[FederalHolidayName]
            ,st.[FederalHoliday_Indicator]
-           ,ds.SchoolKey		   
+           ,st.SchoolKey		   
 		   ,st.DayOfSchoolYear
            ,st.SchoolCalendarEventType_CodeValue
            ,st.SchoolCalendarEventType_Description
@@ -123,16 +143,16 @@ BEGIN
            ,st.[ValidFrom]
            ,st.[ValidTo]
            ,st.[IsCurrent]
+		   ,1 AS [IsLatest]
 		   ,@LineageKey
 		FROM Staging.[Time] st
-		     LEFT JOIN dbo.DimSchool ds ON st.SchoolSourceKey = ds._sourceKey
 
 		-- updating the EndTime to now and status to Success		
 		UPDATE dbo.ETL_Lineage
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

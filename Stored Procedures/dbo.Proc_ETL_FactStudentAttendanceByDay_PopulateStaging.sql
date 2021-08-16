@@ -3,7 +3,6 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
 --Fact StudentAttendanceByDay
 ----------------------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_FactStudentAttendanceByDay_PopulateStaging]
@@ -30,51 +29,57 @@ BEGIN
 		--DECLARE @LastLoadDate datetime= '07/01/2015' DECLARE @NewLoadDate datetime = GETDATE()
 		TRUNCATE TABLE Staging.StudentAttendanceByDay	
 		CREATE TABLE #StudentsToBeProcessed (StudentUSI INT, 
+		                                     StudentUniqueId NVARCHAR(32), 
 		                                     EventDate DATE ,
 											 LastModifiedDate DATETIME )
 		  
-		CREATE TABLE #AttedanceEventRankedByReason (StudentUSI INT, 
+		CREATE TABLE #AttedanceEventRankedByReason (StudentUSI INT, 		                                            
 		                                            SchoolId INT, 
 													SchoolYear SMALLINT, 
 													EventDate DATE, 
 													LastModifiedDate DATETIME,
-													AttendanceEventCategoryDescriptorId INT,
+													AttendanceEventCategoryDescriptor_CodeValue NVARCHAR(50),
 													AttendanceEventReason NVARCHAR(max) , 
 													RowId INT  )
 	    CREATE TABLE #DistinctAttedanceEvents (StudentUSI INT, 
+		                                       StudentUniqueId NVARCHAR(32), 
 		                                       SchoolId INT, 
 											   SchoolYear SMALLINT, 
 											   EventDate DATE, 
 											   LastModifiedDate DATETIME,
-											   AttendanceEventCategoryDescriptorId INT,
+											   AttendanceEventCategoryDescriptor_CodeValue NVARCHAR(50),
 											   AttendanceEventReason NVARCHAR(max))
 	
 		CREATE NONCLUSTERED INDEX [#AttedanceEventRankedByReason_MainCovering]
 		ON [dbo].[#AttedanceEventRankedByReason] ([StudentUSI],[SchoolId],[EventDate],[RowId])
-		INCLUDE ([AttendanceEventCategoryDescriptorId],[AttendanceEventReason])
+		INCLUDE (AttendanceEventCategoryDescriptor_CodeValue,[AttendanceEventReason])
 
 
 		INSERT INTO #DistinctAttedanceEvents
 		(
 		    StudentUSI,
+			StudentUniqueId,
 		    SchoolId,
 		    SchoolYear,
 		    EventDate,
 			LastModifiedDate,
-		    AttendanceEventCategoryDescriptorId,
+		    AttendanceEventCategoryDescriptor_CodeValue,
 		    AttendanceEventReason
 		)
 		SELECT   DISTINCT 
-					StudentUSI, 
-					SchoolId, 
-					SchoolYear, 
-					EventDate,
-					LastModifiedDate,
-					AttendanceEventCategoryDescriptorId,					
-					LTRIM(RTRIM(COALESCE(AttendanceEventReason,''))) AS AttendanceEventReason 
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAttendanceEvent
+					ssae.StudentUSI, 
+					s.StudentUniqueId,
+					ssae.SchoolId, 
+					ssae.SchoolYear, 
+					ssae.EventDate,
+					ssae.LastModifiedDate,
+					d_ssae.CodeValue AS AttendanceEventCategoryDescriptor_CodeValue,					
+					LTRIM(RTRIM(COALESCE(ssae.AttendanceEventReason,''))) AS AttendanceEventReason 
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAttendanceEvent ssae
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s ON ssae.StudentUSI = s.StudentUSI
+			 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_ssae ON ssae.AttendanceEventCategoryDescriptorId = d_ssae.DescriptorId
 		WHERE SchoolYear >= 2019
-			AND (LastModifiedDate > @LastLoadDate  AND LastModifiedDate <= @NewLoadDate)
+			AND (ssae.LastModifiedDate > @LastLoadDate  AND ssae.LastModifiedDate <= @NewLoadDate)
 		
 
 		INSERT INTO #AttedanceEventRankedByReason
@@ -84,7 +89,7 @@ BEGIN
 			SchoolYear,
 			EventDate,
 			LastModifiedDate,
-			AttendanceEventCategoryDescriptorId,
+			AttendanceEventCategoryDescriptor_CodeValue,
 			AttendanceEventReason,
 			RowId
 		)
@@ -94,29 +99,30 @@ BEGIN
 					SchoolYear, 
 					EventDate,
 					LastModifiedDate,
-					AttendanceEventCategoryDescriptorId,
+					AttendanceEventCategoryDescriptor_CodeValue,
 					AttendanceEventReason , 
 					ROW_NUMBER() OVER (PARTITION BY StudentUSI, 
 													SchoolId, 
 													SchoolYear, 
 													EventDate,
-													AttendanceEventCategoryDescriptorId
+													AttendanceEventCategoryDescriptor_CodeValue
 										ORDER BY AttendanceEventReason DESC) AS RowId 
 			FROM #DistinctAttedanceEvents
 
 			
 		IF (@LastLoadDate <> '07/01/2015')
 			BEGIN
-				INSERT INTO #StudentsToBeProcessed (StudentUSI, EventDate, LastModifiedDate)
-				SELECT DISTINCT StudentUSI, EventDate, LastModifiedDate
+				INSERT INTO #StudentsToBeProcessed (StudentUSI, StudentUniqueId, EventDate, LastModifiedDate)
+				SELECT DISTINCT StudentUSI, StudentUniqueId, EventDate, LastModifiedDate
 				FROM #DistinctAttedanceEvents
 			END
 	    ELSE --this first time all students will be processed
 			BEGIN
-				INSERT INTO #StudentsToBeProcessed (StudentUSI, EventDate, LastModifiedDate)
-				SELECT DISTINCT StudentUSI, NULL AS EventDate, NULL AS LastModifiedDate --we don't care about event changes the first this runs. 
-				FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation
-				WHERE SchoolYear >= 2019
+				INSERT INTO #StudentsToBeProcessed (StudentUSI, StudentUniqueId, EventDate, LastModifiedDate)
+				SELECT DISTINCT s.StudentUSI, s.StudentUniqueId, NULL AS EventDate, NULL AS LastModifiedDate --we don't care about event changes the first this runs. 
+				FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa
+				     INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s ON ssa.StudentUSI = s.StudentUSI
+				WHERE ssa.SchoolYear >= 2019
 			END;
 		
 		
@@ -136,7 +142,7 @@ BEGIN
 		    _sourceAttendanceEventCategoryKey
 		)	
 		SELECT DISTINCT         
-				  CONCAT_WS('|',Convert(NVARCHAR(MAX),ssa.StudentUSI),CONVERT(CHAR(10), cdce.Date, 101)) AS _sourceKey,
+				  CONCAT_WS('|',stbp.StudentUniqueId,CONVERT(CHAR(10), cdce.Date, 101)) AS _sourceKey,
 				  NULL AS StudentKey,
 				  NULL AS TimeKey,	  
 				  NULL AS SchoolKey,  
@@ -144,17 +150,17 @@ BEGIN
 				  ISNULL(ssae.AttendanceEventReason,'') AS AttendanceEventReason,
 				  --stbp.LastModifiedDate only makes sense when identifying deltas, the first time we just follow the calendar date
 				  cdce.Date AS ModifiedDate,
-				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StudentUSI)) AS _sourceStudentKey,
+				  CONCAT_WS('|','Ed-Fi',stbp.StudentUniqueId) AS _sourceStudentKey,
 		          cdce.Date AS _sourceTimeKey,		          
 				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.SchoolId))  AS _sourceSchoolKey,
-		          CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),ssae.AttendanceEventCategoryDescriptorId))  AS _sourceAttendanceEventCategoryKey
+		          CONCAT_WS('|','Ed-Fi', ssae.AttendanceEventCategoryDescriptor_CodeValue)  AS _sourceAttendanceEventCategoryKey
 				  				  
 			--select *  
-			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa 
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDate cda on ssa.SchoolId = cda.SchoolId 														   
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce on cda.Date=cdce.Date 
+			FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSchoolAssociation ssa 
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDate cda on ssa.SchoolId = cda.SchoolId 														   
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CalendarDateCalendarEvent cdce on cda.Date=cdce.Date 
 																					 and cda.SchoolId=cdce.SchoolId
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_cdce on cdce.CalendarEventDescriptorId = d_cdce.DescriptorId
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_cdce on cdce.CalendarEventDescriptorId = d_cdce.DescriptorId
 																	  and d_cdce.CodeValue='Instructional day' -- ONLY Instructional days
 	            INNER JOIN  #StudentsToBeProcessed stbp ON ssa.StudentUSI = stbp.StudentUSI
 				                                      AND (stbp.EventDate IS NULL OR 
@@ -162,7 +168,8 @@ BEGIN
 				LEFT JOIN #AttedanceEventRankedByReason ssae on ssa.StudentUSI = ssae.StudentUSI
 															   AND ssa.SchoolId = ssae.SchoolId 
 															   AND cda.Date = ssae.EventDate
-															   AND ssae.RowId= 1			
+															   AND ssae.RowId= 1	
+		        
 			WHERE  cdce.Date >= ssa.EntryDate 
 			   AND cdce.Date <= GETDATE()
 			   AND (

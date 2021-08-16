@@ -2,9 +2,9 @@ CREATE TABLE [Staging].[DisciplineIncident]
 (
 [DisciplineIncidentKey] [int] NOT NULL IDENTITY(1, 1),
 [_sourceKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[SchoolKey] [int] NOT NULL,
-[ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
-[NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[SchoolKey] [int] NULL,
+[ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [SchoolYear] [int] NOT NULL,
 [IncidentDate] [date] NOT NULL,
 [IncidentTime] [time] NOT NULL,
@@ -23,6 +23,7 @@ CREATE TABLE [Staging].[DisciplineIncident]
 [ReportedToLawEnforcement_Indicator] [bit] NOT NULL,
 [IncidentCost] [money] NOT NULL,
 [IncidentModifiedDate] [datetime] NOT NULL,
+[_sourceSchoolKey] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL

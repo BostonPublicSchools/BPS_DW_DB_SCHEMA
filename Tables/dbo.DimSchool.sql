@@ -20,10 +20,11 @@ CREATE TABLE [dbo].[DimSchool]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimSchool] ADD CONSTRAINT [PK_DimSchool] PRIMARY KEY CLUSTERED  ([SchoolKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimSchool_CoveringIndex] ON [dbo].[DimSchool] ([_sourceKey], [ValidFrom]) INCLUDE ([SchoolKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimSchool_CoveringIndex] ON [dbo].[DimSchool] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [SchoolKey]) ON [PRIMARY]
 GO

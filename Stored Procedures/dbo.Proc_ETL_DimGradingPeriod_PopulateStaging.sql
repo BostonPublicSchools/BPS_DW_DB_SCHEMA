@@ -38,21 +38,23 @@ BEGIN
 		    TotalInstructionalDays,
 		    PeriodSequence,
 		    ModifiedDate,
+			_sourceSchoolKey,
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent
 		)		
 		--declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT
-		    CONCAT_WS('|','Ed-Fi',CAST(gp.GradingPeriodDescriptorId AS NVARCHAR),CAST(gp.SchoolId AS NVARCHAR),CONVERT(NVARCHAR, gp.BeginDate, 112)) AS [_sourceKey],
+		    CONCAT_WS('|','Ed-Fi',gpd.CodeValue,CAST(gp.SchoolId AS NVARCHAR),CONVERT(NVARCHAR, gp.BeginDate, 112)) AS [_sourceKey],
 			COALESCE(gpd.CodeValue,'N/A') AS GradingPeriodDescriptor_CodeValue,
-			dschool.SchoolKey,
+			NULL AS SchoolKey,
 			gp.BeginDate,
 			gp.EndDate,
 			gp.TotalInstructionalDays,
 			gp.PeriodSequence,
 			CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(gp.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS LastModifiedDate,
 
+			CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),gp.SchoolId))  AS _sourceSchoolKey,
 			--Making sure the first time, the ValidFrom is set to beginning of time 
 			CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				        (SELECT MAX(t) FROM
@@ -67,10 +69,10 @@ BEGIN
 			1 AS IsCurrent		
 		--SELECT *
 		FROM
-			[EDFISQL01].[EdFi_BPS_Production_Ods].edfi.GradingPeriod AS gp
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor AS gpd ON	gp.GradingPeriodDescriptorId = gpd.DescriptorId
-				INNER JOIN dbo.DimSchool dschool ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),gp.SchoolId)   = dschool._sourceKey
-		WHERE gp.BeginDate < GETDATE()		      
+			[EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.GradingPeriod AS gp
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor AS gpd ON	gp.GradingPeriodDescriptorId = gpd.DescriptorId
+				
+		WHERE gp.BeginDate < GETDATE()		      		      
 		      AND dbo.Func_ETL_GetSchoolYear(gp.BeginDate) >= 2019 
 		      AND (
 			  	    (gp.LastModifiedDate > @LastLoadDate AND gp.LastModifiedDate <= @NewLoadDate)

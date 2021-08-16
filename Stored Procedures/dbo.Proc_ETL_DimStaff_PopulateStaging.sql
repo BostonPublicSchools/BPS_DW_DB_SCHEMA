@@ -32,6 +32,9 @@ BEGIN
 		    PrimaryElectronicMailAddress,
 		    PrimaryElectronicMailTypeDescriptor_CodeValue,
 		    PrimaryElectronicMailTypeDescriptor_Description,
+			EducationOrganizationId,
+            ShortNameOfInstitution,
+            NameOfInstitution,
 		    StaffUniqueId,
 		    PersonalTitlePrefix,
 		    FirstName,
@@ -55,18 +58,23 @@ BEGIN
 		    HighlyQualifiedTeacher_Indicator,
 		    StaffClassificationDescriptor_CodeValue,
 		    StaffClassificationDescriptor_CodeDescription,			
-			StaffMainInfoModifiedDate,
+			StaffMainInfoModifiedDate,			
+            StaffEdOrgAssignmentModifiedDate,  
+            StaffEdOrgEmploymentModifiedDate,  
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent
 		)
 	
-        
+        --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT  DISTINCT 
-			    CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),s.StaffUSI)) AS [_sourceKey]
+			    CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),s.StaffUniqueId)) AS [_sourceKey]
 				,sem.ElectronicMailAddress AS [PrimaryElectronicMailAddress]
-				,emt.CodeValue AS [PrimaryElectronicMailTypeDescriptor_CodeValue]
-				,emt.Description AS [PrimaryElectronicMailTypeDescriptor_Description]
+				,sem_d.CodeValue AS [PrimaryElectronicMailTypeDescriptor_CodeValue]
+				,sem_d.Description AS [PrimaryElectronicMailTypeDescriptor_Description]
+				,eo.EducationOrganizationId
+				,COALESCE(eo.ShortNameOfInstitution,'N/A') AS ShortNameOfInstitution
+				,eo.NameOfInstitution
 				,s.StaffUniqueId
 				,s.PersonalTitlePrefix
 				,s.FirstName
@@ -79,14 +87,14 @@ BEGIN
 				,s.BirthDate
 				,DATEDIFF(YEAR, s.BirthDate, GetDate()) AS [StaffAge]
 				,CASE 
-					WHEN sex.CodeValue  = 'Male' THEN 'M'
-					WHEN sex.CodeValue  = 'Female' THEN 'F'
+					WHEN d_sex.CodeValue  = 'Male' THEN 'M'
+					WHEN d_sex.CodeValue  = 'Female' THEN 'F'
 					ELSE 'NS' -- not selected
 				END AS SexType_Code
-				,COALESCE(sex.CodeValue,'Not Selected') AS SexType_Description
-				,CASE WHEN COALESCE(sex.CodeValue,'Not Selected')  = 'Male' THEN 1 ELSE 0 END AS SexType_Male_Indicator
-				,CASE WHEN COALESCE(sex.CodeValue,'Not Selected')  = 'Female' THEN 1 ELSE 0 END AS SexType_Female_Indicator
-				,CASE WHEN COALESCE(sex.CodeValue,'Not Selected')  = 'Not Selected' THEN 1 ELSE 0 END AS SexType_NotSelected_Indicator
+				,COALESCE(d_sex.CodeValue,'Not Selected') AS SexType_Description
+				,CASE WHEN COALESCE(d_sex.CodeValue,'Not Selected')  = 'Male' THEN 1 ELSE 0 END AS SexType_Male_Indicator
+				,CASE WHEN COALESCE(d_sex.CodeValue,'Not Selected')  = 'Female' THEN 1 ELSE 0 END AS SexType_Female_Indicator
+				,CASE WHEN COALESCE(d_sex.CodeValue,'Not Selected')  = 'Not Selected' THEN 1 ELSE 0 END AS SexType_NotSelected_Indicator
 				,COALESCE(d_le.CodeValue,'N/A') as [HighestLevelOfEducationDescriptorDescriptor_CodeValue]
 				,COALESCE(d_le.Description,'N/A') as [HighestLevelOfEducationDescriptorDescriptor_Description]
 				,s.YearsOfPriorProfessionalExperience
@@ -95,34 +103,46 @@ BEGIN
 				,COALESCE(d_sc.CodeValue,'N/A') as StaffClassificationDescriptor_CodeValue
 				,COALESCE(d_sc.Description,'N/A') as StaffClassificationDescriptor_Description
 				,CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(s.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS StaffMainInfoModifiedDate
+				,CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(seoaa.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS StaffEdOrgAssignmentModifiedDate
+				,CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(seoea.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS StaffEdOrgEmploymentModifiedDate
 				--Making sure the first time, the ValidFrom is set to beginning of time 
 				,CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
                              (VALUES
-                               (s.LastModifiedDate)
+                                (s.LastModifiedDate)
+							   ,(seoaa.LastModifiedDate)
+							   ,(seoea.LastModifiedDate)
                              ) AS [MaxLastModifiedDate](t)
                            )
 					ELSE 
 					      seoaa.BeginDate 
 				END AS ValidFrom
-				,case when seoaa.EndDate IS null then  '12/31/9999' else seoaa.EndDate  END AS ValidTo
-				,case when seoaa.EndDate IS NULL OR seoaa.EndDate > GETDATE() THEN  1 else 0 end AS IsCurrent 
+				,COALESCE(seoaa.EndDate,'12/31/9999') ValidTo
+				,CASE WHEN COALESCE(seoea.EndDate,'12/31/9999') >= GETDATE() then 1 
+                     ELSE 0 
+			     END AS IsCurrent
+
 		--SELECT distinct *
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Staff s 
-			  INNER JOIN  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffEducationOrganizationAssignmentAssociation seoaa ON s.StaffUSI = seoaa.StaffUSI
+		FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s 
+			  INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffEducationOrganizationAssignmentAssociation seoaa ON s.StaffUSI = seoaa.StaffUSI
+			  INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffEducationOrganizationEmploymentAssociation seoea ON seoaa.StaffUSI = seoea.StaffUSI
+			                                                                                                         AND seoaa.EducationOrganizationId = seoea.EducationOrganizationId
+			  INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.EducationOrganization eo ON seoaa.EducationOrganizationId = eo.EducationOrganizationId
 			  --sex	 
-			  left JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SexType sex ON s.SexTypeId = sex.SexTypeId
-			  left join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.OldEthnicityType oet on s.OldEthnicityTypeId = oet.OldEthnicityTypeId
-			  left join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CitizenshipStatusType cst on s.CitizenshipStatusTypeId = cst.CitizenshipStatusTypeId
-			  left join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_le on s.HighestCompletedLevelOfEducationDescriptorId = d_le.DescriptorId
-			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffElectronicMail sem ON s.StaffUSI = sem.StaffUSI
-			 															  AND sem.PrimaryEmailAddressIndicator = 1
-			  LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ElectronicMailType emt ON sem.ElectronicMailTypeId = emt.ElectronicMailTypeId
-			  left join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_sc on seoaa.StaffClassificationDescriptorId = d_sc.DescriptorId
-			 
-		WHERE 
-			(s.LastModifiedDate > @LastLoadDate AND s.LastModifiedDate <= @NewLoadDate)
-						
+			  left JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_sex ON s.SexDescriptorId = d_sex.DescriptorId
+			  left join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_le on s.HighestCompletedLevelOfEducationDescriptorId = d_le.DescriptorId
+
+			  LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffElectronicMail sem ON s.StaffUSI = sem.StaffUSI
+			  LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor sem_d ON sem.ElectronicMailTypeDescriptorId = sem_d.DescriptorId 
+			                                                                             AND sem_d.CodeValue = 'Primary' 	
+			 															  	  
+			  left join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_sc on seoaa.StaffClassificationDescriptorId = d_sc.DescriptorId			  
+			
+		WHERE NOT EXISTS(SELECT 1
+			             FROM dbo.DimStaff ds
+					     WHERE CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),s.StaffUniqueId)) = ds._sourceKey)
+			
+
 	END TRY
 	BEGIN CATCH
 		

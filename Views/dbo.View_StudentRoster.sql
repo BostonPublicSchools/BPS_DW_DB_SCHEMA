@@ -80,7 +80,8 @@ SELECT
 
 		ds.ValidFrom,
 		ds.ValidTo,
-		ds.IsCurrent
+		ds.IsCurrent,
+		ds.IsLatest
 		
 		
 FROM dbo.DimStudent ds 		

@@ -47,46 +47,47 @@ BEGIN
 		
 		
 		SELECT   DISTINCT 
-			      CONCAT_WS('|',CONVERT(NVARCHAR(MAX),s.StudentUSI),sa.StudentAssessmentIdentifier) AS _sourceKey,				  
+			      CONCAT_WS('|',s.StudentUniqueId, CONVERT(NVARCHAR, sa.AdministrationDate, 112), sa.AssessmentIdentifier,'N/A',armt_d.CodeValue) AS _sourceKey,				  
 				  NULL AS StudentKey,
 				  NULL AS TimeKey,	  
 				  NULL AS AssessmentKey,
 				  sas.Result AS [SoreResult],
-				  CASE when ascr_rdtt.CodeValue in ('Integer') AND TRY_CAST(sas.Result AS INTEGER) IS NOT NULL AND sas.Result <> '-' THEN sas.Result ELSE NULL END AS IntegerScoreResult,
-				  CASE when ascr_rdtt.CodeValue in ('Decimal','Percentage','Percentile')  AND TRY_CAST(sas.Result AS FLOAT)  IS NOT NULL THEN sas.Result ELSE NULL END AS DecimalScoreResult,
-				  CASE when ascr_rdtt.CodeValue not in ('Integer','Decimal','Percentage','Percentile') THEN sas.Result ELSE NULL END AS LiteralScoreResult,
+				  CASE when ascr_dt_d.CodeValue in ('Integer') AND TRY_CAST(sas.Result AS INTEGER) IS NOT NULL AND sas.Result <> '-' THEN sas.Result ELSE NULL END AS IntegerScoreResult,
+				  CASE when ascr_dt_d.CodeValue in ('Decimal','Percentage','Percentile')  AND TRY_CAST(sas.Result AS FLOAT)  IS NOT NULL THEN sas.Result ELSE NULL END AS DecimalScoreResult,
+				  CASE when ascr_dt_d.CodeValue not in ('Integer','Decimal','Percentage','Percentile') THEN sas.Result ELSE NULL END AS LiteralScoreResult,
 				  CONVERT(DATE ,sa.AdministrationDate) AS ModifiedDate ,
-				  CONCAT_WS('|','Ed-Fi',CONVERT(NVARCHAR(MAX),s.StudentUSI)) AS  _sourceStudentKey,
+				  CONCAT_WS('|','Ed-Fi',s.StudentUniqueId) AS  _sourceStudentKey,
 				  CONVERT(DATE ,sa.AdministrationDate) AS  _sourceTimeKey,
-				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa.AssessmentIdentifier),'N/A',Convert(NVARCHAR(MAX),armt.CodeValue)) AS  _sourceAssessmentKey
+				  CONCAT_WS('|','Ed-Fi',sa.AssessmentIdentifier,'N/A',armt_d.CodeValue) AS  _sourceAssessmentKey
 			--select top 1 'Ed-Fi|' + Convert(NVARCHAR(MAX),sa.AssessmentIdentifier)  + '|N/A|' + Convert(NVARCHAR(MAX),armt.CodeValue), sa.AdministrationDate,*  
-			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].Student s 
+			FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Student s 
       
 				--student assessment
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].StudentAssessment sa on sa.StudentUSI = s.StudentUSI
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].StudentAssessment sa on sa.StudentUSI = s.StudentUSI
       
 				--student assessment score results
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].StudentAssessmentScoreResult sas on sa.StudentAssessmentIdentifier = sas.StudentAssessmentIdentifier
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].StudentAssessmentScoreResult sas on sa.StudentAssessmentIdentifier = sas.StudentAssessmentIdentifier
 																and sa.AssessmentIdentifier = sas.AssessmentIdentifier
-
+																and sa.StudentUSI = sas.StudentUSI
 				--assessment 
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].Assessment a on sa.AssessmentIdentifier = a.AssessmentIdentifier 
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Assessment a on sa.AssessmentIdentifier = a.AssessmentIdentifier 
 
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].AssessmentScore ascr on sas.AssessmentIdentifier = ascr.AssessmentIdentifier 
-													and sas.[AssessmentReportingMethodTypeId] = ascr.[AssessmentReportingMethodTypeId]
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].[AssessmentReportingMethodType] armt on ascr.[AssessmentReportingMethodTypeId] = armt.[AssessmentReportingMethodTypeId]
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].AssessmentScore ascr on sas.AssessmentIdentifier = ascr.AssessmentIdentifier 
+													and sas.AssessmentReportingMethodDescriptorId = ascr.AssessmentReportingMethodDescriptorId
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Descriptor armt_d on ascr.AssessmentReportingMethodDescriptorId = armt_d.DescriptorId
 
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.ResultDatatypeType ascr_rdtt ON ascr.ResultDatatypeTypeId = ascr_rdtt.ResultDatatypeTypeId	
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor ascr_dt_d ON ascr.ResultDatatypeTypeDescriptorId = ascr_dt_d.DescriptorId	
 				
 			WHERE CHARINDEX('MCAS',a.AssessmentIdentifier,1) = 1 
 				 AND sa.AdministrationDate >= '07/01/2018'		
+				 AND sa.AdministrationDate <= GETDATE()
 				 AND  (
 					   (sa.LastModifiedDate > @LastLoadDate  AND sa.LastModifiedDate <= @NewLoadDate)			     
 					  )
 
 		UNION ALL
 		SELECT   DISTINCT 
-			      CONCAT_WS('|',CONVERT(NVARCHAR(MAX),s.StudentUSI),sa.StudentAssessmentIdentifier),
+			      CONCAT_WS('|',s.StudentUniqueId, CONVERT(NVARCHAR, sa.AdministrationDate, 112), sa.AssessmentIdentifier,'N/A',apl_armd_d.CodeValue) AS _sourceKey,				  
 				  NULL AS StudentKey,
 				  NULL AS TimeKey,	  
 				  NULL AS AssessmentKey,
@@ -97,32 +98,33 @@ BEGIN
 				  CONVERT(DATE ,sa.AdministrationDate) AS ModifiedDate ,
 				  CONCAT_WS('|','Ed-Fi',CONVERT(NVARCHAR(MAX),s.StudentUSI)) AS  _sourceStudentKey,
 				  CONVERT(DATE ,sa.AdministrationDate) AS  _sourceTimeKey,
-				  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa.AssessmentIdentifier),'N/A',Convert(NVARCHAR(MAX),apl_sd.CodeValue)) AS  _sourceAssessmentKey
+				  CONCAT_WS('|','Ed-Fi',sa.AssessmentIdentifier,'N/A',apl_armd_d.CodeValue) AS  _sourceAssessmentKey
 			--select top 100 *  
-			FROM [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].Student s 
+			FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Student s 
       
 				--student assessment
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].StudentAssessment sa on sa.StudentUSI = s.StudentUSI 
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].StudentAssessment sa on sa.StudentUSI = s.StudentUSI 
 	
-				inner  join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].StudentAssessmentPerformanceLevel sapl on sa.StudentAssessmentIdentifier = sapl.StudentAssessmentIdentifier
+				inner  join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].StudentAssessmentPerformanceLevel sapl on sa.StudentAssessmentIdentifier = sapl.StudentAssessmentIdentifier
 																		 and sa.AssessmentIdentifier = sapl.AssessmentIdentifier
-															 --    and apl.PerformanceLevelDescriptorId = sapl.PerformanceLevelDescriptorId
+															             and sa.StudentUSI = sapl.StudentUSI
     
 				--assessment 
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].Assessment a on sa.AssessmentIdentifier = a.AssessmentIdentifier 
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Assessment a on sa.AssessmentIdentifier = a.AssessmentIdentifier 
 
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].[AssessmentPerformanceLevel] apl on sa.AssessmentIdentifier = apl.AssessmentIdentifier 
-																 and sapl.[AssessmentReportingMethodTypeId] = apl.[AssessmentReportingMethodTypeId]
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].[AssessmentPerformanceLevel] apl on sa.AssessmentIdentifier = apl.AssessmentIdentifier 
+																 and sapl.AssessmentReportingMethodDescriptorId = apl.AssessmentReportingMethodDescriptorId
 																 and sapl.PerformanceLevelDescriptorId = apl.PerformanceLevelDescriptorId
     
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].[AssessmentReportingMethodType] apl_sd on apl.[AssessmentReportingMethodTypeId] = apl_sd.[AssessmentReportingMethodTypeId] 
-				inner join [EDFISQL01].[EdFi_BPS_Production_Ods].[edfi].Descriptor apl_ld on apl.PerformanceLevelDescriptorId = apl_ld.DescriptorId 
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Descriptor apl_armd_d on apl.AssessmentReportingMethodDescriptorId = apl_armd_d.DescriptorId
+				inner join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].[edfi].Descriptor apl_ld on apl.PerformanceLevelDescriptorId = apl_ld.DescriptorId 
 
 			WHERE CHARINDEX('MCAS',a.AssessmentIdentifier,1) = 1           
-				 AND sa.AdministrationDate >= '07/18/2018'
-				 AND  (
-					   (sa.LastModifiedDate > @LastLoadDate  AND sa.LastModifiedDate <= @NewLoadDate)			     
-					  )
+				  AND sa.AdministrationDate >= '07/18/2018'
+				  AND sa.AdministrationDate <= GETDATE()
+				  AND  (
+					     (sa.LastModifiedDate > @LastLoadDate  AND sa.LastModifiedDate <= @NewLoadDate)			     
+					   );
 		 
 	END TRY
 	BEGIN CATCH

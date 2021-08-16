@@ -44,6 +44,7 @@ BEGIN
 				       ValidFrom,
 				       ValidTo,
 				       IsCurrent,
+					   IsLatest,
 				       LineageKey
 				   )
 				   VALUES
@@ -58,15 +59,66 @@ BEGIN
 				       '07/01/2015', -- ValidFrom - datetime
 					   '9999-12-31', -- ValidTo - datetime
 				       0,      -- IsCurrent - bit
+					   1,      -- IsLatest - bit
 				       -1          -- LineageKey - int
 				       )
 				
 				END
+        --updating staging keys
+		UPDATE s 
+		SET s.StudentKey = COALESCE(
+								(SELECT TOP (1) ds.StudentKey
+								FROM dbo.DimStudent ds
+								WHERE s._sourceStudentKey = ds._sourceKey									
+									AND s.ValidFrom >= ds.[ValidFrom]
+									AND s.ValidFrom < ds.[ValidTo]
+								ORDER BY ds.[ValidFrom] DESC),
+								(SELECT ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE ds._sourceKey = '')
+							),
+			s.SchoolKey = COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE s.[_sourceSchoolKey] = ds._sourceKey									
+										AND s.ValidFrom >= ds.[ValidFrom]
+										AND s.ValidFrom < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE ds._sourceKey = '')
+							      ) ,
+			s.CourseKey = COALESCE(
+								(SELECT TOP (1) dc.CourseKey
+								FROM dbo.DimCourse dc
+								WHERE s._sourceCourseKey = dc._sourceKey									
+									AND s.ValidFrom >= dc.[ValidFrom]
+									AND s.ValidFrom < dc.[ValidTo]
+								ORDER BY dc.[ValidFrom] DESC),
+								(SELECT ds.CourseKey
+								 FROM dbo.DimCourse ds
+								 WHERE ds._sourceKey = '')
+
+							)	,
+			s.StaffKey = COALESCE(
+								(SELECT TOP (1) ds.StaffKey
+								FROM dbo.DimStaff ds
+								WHERE s._sourceCourseKey = ds._sourceKey									
+									AND s.ValidFrom >= ds.[ValidFrom]
+									AND s.ValidFrom < ds.[ValidTo]
+								ORDER BY ds.[ValidFrom] DESC),
+								(SELECT ds.StaffKey
+								 FROM dbo.DimStaff ds
+								 WHERE ds._sourceKey = '')
+							)
+        FROM Staging.StudentSection s;
+
 
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified		
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].DimStudentSection AS prod
 			INNER JOIN Staging.StudentSection AS stage ON prod._sourceKey = stage._sourceKey
@@ -86,6 +138,7 @@ BEGIN
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent,
+			IsLatest,
 		    LineageKey
 		)
 		
@@ -101,6 +154,7 @@ BEGIN
 			  ,[ValidFrom]
 			  ,[ValidTo]
 			  ,[IsCurrent]
+			  ,1 AS [IsLatest]
 		      ,@LineageKey
 		FROM Staging.StudentSection
 
@@ -109,7 +163,7 @@ BEGIN
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

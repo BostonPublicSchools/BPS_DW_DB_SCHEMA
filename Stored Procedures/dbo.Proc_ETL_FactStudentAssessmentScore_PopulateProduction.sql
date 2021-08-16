@@ -27,13 +27,16 @@ BEGIN
 		 
 		--updating staging keys
 		UPDATE s 
-		SET s.StudentKey = (
-								SELECT TOP (1) ds.StudentKey
-								FROM dbo.DimStudent ds
-								WHERE s._sourceStudentKey = ds._sourceKey									
+		SET s.StudentKey = COALESCE(
+								(SELECT TOP (1) ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
+								 ORDER BY ds.[ValidFrom] DESC),
+								(SELECT ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE ds._sourceKey = '')
 							),
 			s.TimeKey = (
 							SELECT TOP (1) dt.TimeKey
@@ -41,21 +44,39 @@ BEGIN
 							WHERE s._sourceTimeKey = dt.SchoolDate
 							ORDER BY dt.SchoolDate
 						),		
-			s.AssessmentKey =(
-								SELECT TOP (1) da.AssessmentKey
-								FROM dbo.DimAssessment da
-								WHERE s._sourceAssessmentKey = da._sourceKey									
-									AND s.[ModifiedDate] >= da.[ValidFrom]
-									AND s.[ModifiedDate] < da.[ValidTo]
-								ORDER BY da.[ValidFrom] DESC
+			s.AssessmentKey =COALESCE(
+								(SELECT TOP (1) da.AssessmentKey
+								 FROM dbo.DimAssessment da
+								 WHERE s._sourceAssessmentKey = da._sourceKey									
+									 AND s.[ModifiedDate] >= da.[ValidFrom]
+									 AND s.[ModifiedDate] < da.[ValidTo]
+								 ORDER BY da.[ValidFrom] DESC),
+								 (SELECT da.AssessmentKey
+								 FROM dbo.DimAssessment da
+								 WHERE da._sourceKey = '')
+
 						 	 )  										             
         FROM Staging.StudentAssessmentScore s;
 		
-		DELETE FROM Staging.StudentAssessmentScore
-		--SELECT * FROM Staging.StudentAssessmentScore
-		WHERE StudentKey IS NULL OR 
-		      TimeKey IS NULL OR			  
-			  AssessmentKey IS NULL;
+		DELETE FROM Staging.StudentAssessmentScore 
+		WHERE TimeKey IS NULL
+        
+		;WITH DuplicateKeys AS 
+		(
+		  SELECT [StudentKey], [TimeKey],[AssessmentKey]
+		  FROM  Staging.StudentAssessmentScore
+		  GROUP BY [StudentKey], [TimeKey],[AssessmentKey]
+		  HAVING COUNT(*) > 1
+		)
+		
+		DELETE sd 
+		FROM Staging.StudentAssessmentScore sd
+		WHERE EXISTS(SELECT 1 
+		             FROM DuplicateKeys dk 
+					 WHERE sd.[StudentKey] = dk.StudentKey
+					   AND sd.[TimeKey] = dk.[TimeKey]
+					   AND sd.[AssessmentKey] = dk.[AssessmentKey])
+
 
 		--dropping the columnstore index
         DROP INDEX IF EXISTS CSI_FactStudentAssessmentScore ON dbo.FactStudentAssessmentScore;
@@ -78,7 +99,7 @@ BEGIN
 						   ,IntegerScoreResult
 						   ,DecimalScoreResult
 						   ,LiteralScoreResult
-						   ,[LineageKey])
+						   ,LineageKey)
 		SELECT DISTINCT 
 		   [_sourceKey],
 		   [StudentKey],
@@ -128,7 +149,7 @@ BEGIN
 						   ,IntegerScoreResult
 						   ,DecimalScoreResult
 						   ,LiteralScoreResult
-						   ,[LineageKey])
+						   ,LineageKey)
 
 					SELECT   DISTINCT 
 						  'LegacyDW',
@@ -140,7 +161,7 @@ BEGIN
 						  CASE when da.ResultDatatypeTypeDescriptor_CodeValue in ('Decimal','Percentage','Percentile')  AND TRY_CAST(us.scorevalue AS FLOAT)  IS NOT NULL THEN us.scorevalue ELSE NULL END AS DecimalScoreResult,
 						  CASE when da.ResultDatatypeTypeDescriptor_CodeValue not in ('Integer','Decimal','Percentage','Percentile') THEN us.scorevalue ELSE NULL END AS LiteralScoreResult,
 						  --us.*
-						  @lineageKey AS [LineageKey]
+						  @lineageKey AS LineageKey
 					--select top 100 *  
 					FROM UnpivotedScores us
 
@@ -250,7 +271,7 @@ BEGIN
 			  ,[IntegerScoreResult]
 			  ,[DecimalScoreResult]
 			  ,[LiteralScoreResult]
-			  ,[LineageKey])
+			  ,LineageKey)
 
 		--Deriving
 		--dropping the columnstore index
@@ -338,7 +359,7 @@ BEGIN
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

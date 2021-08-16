@@ -5,8 +5,7 @@ GO
 
 --Dim DisciplineIncident
 --------------------------------------------------------------------
---[dbo].[Proc_ETL_DimDisciplineIncident_PopulateStaging]  '2021-02-08 01:01:56.000' , '02/17/2021'
-CREATE   PROCEDURE [dbo].[Proc_ETL_DimDisciplineIncident_PopulateStaging]  
+CREATE   PROCEDURE [dbo].[Proc_ETL_DimDisciplineIncident_PopulateStaging]
 @LastLoadDate datetime,
 @NewLoadDate datetime
 AS
@@ -18,13 +17,16 @@ BEGIN
 	SET DEADLOCK_PRIORITY HIGH;
 	
 	--When SET XACT_ABORT is ON, if a Transact-SQL statement raises a run-time error, the entire transaction is terminated and rolled back.
-	--SET XACT_ABORT ON;
+	SET XACT_ABORT ON;
 
 	--This will allow for dirty reads. By default SQL Server uses "READ COMMITED" 
 	SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 
+
+
 	BEGIN TRY
-		--declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()	
+
+		
 		TRUNCATE TABLE Staging.DisciplineIncident
 		INSERT INTO Staging.DisciplineIncident
 				   (_sourceKey
@@ -51,16 +53,18 @@ BEGIN
 				    ,[IncidentCost]
 
 					,IncidentModifiedDate
+           
+		            ,_sourceSchoolKey
 
 				    ,[ValidFrom]
 				    ,[ValidTo]
 				    ,[IsCurrent])
-        
+        --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT DISTINCT 
 				CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),di.IncidentIdentifier)) AS [_sourceKey],
-				dschool.SchoolKey,
-				dschool.ShortNameOfInstitution,
-				dschool.NameOfInstitution,
+				NULL AS SchoolKey,
+				NULL AS ShortNameOfInstitution,
+				NULL AS NameOfInstitution,
 				dbo.Func_ETL_GetSchoolYear(di.IncidentDate),
 				di.IncidentDate,
 				COALESCE(di.IncidentTime,'00:00:00.0000000') AS IncidentTime,
@@ -85,6 +89,8 @@ BEGIN
 				
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(di.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS IncidentModifiedDate,
 
+				CONCAT_WS('|','Ed-Fi', Convert(NVARCHAR(MAX),di.SchoolId))  AS _sourceSchoolKey,
+
 				--Making sure the first time, the ValidFrom is set to beginning of time 
 				CASE WHEN @LastLoadDate <> '07/01/2015' THEN
 				           (SELECT MAX(t) FROM
@@ -97,23 +103,21 @@ BEGIN
 				END AS ValidFrom,
 				'12/31/9999' AS ValidTo,
 				1 AS IsCurrent		
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineIncidentBehavior dib ON di.IncidentIdentifier = dib.IncidentIdentifier
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineActionDisciplineIncident dadi ON di.IncidentIdentifier = dadi.IncidentIdentifier
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.DisciplineActionDiscipline dad ON dadi.DisciplineActionIdentifier = dad.DisciplineActionIdentifier
-
-				INNER JOIN dbo.DimSchool dschool ON 'Ed-Fi|' + Convert(NVARCHAR(MAX),di.SchoolId)   = dschool._sourceKey
-				INNER JOIN dbo.DimTime dt ON di.IncidentDate = dt.SchoolDate
-												AND dt.SchoolKey is not null   
-												AND dschool.SchoolKey = dt.SchoolKey
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_dib ON dib.BehaviorDescriptorId   = d_dib.DescriptorId
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.IncidentLocationType d_dil ON di.IncidentLocationTypeId   = d_dil.IncidentLocationTypeId
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_dia ON dad.DisciplineDescriptorId   = d_dia.DescriptorId
-				LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor d_dirt ON di.ReporterDescriptionDescriptorId   = d_dirt.DescriptorId
+		--select *
+		FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.DisciplineIncident di       
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.DisciplineIncidentBehavior dib ON di.IncidentIdentifier = dib.IncidentIdentifier
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.DisciplineActionStudentDisciplineIncidentAssociation dadi ON di.IncidentIdentifier = dadi.IncidentIdentifier
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.DisciplineActionDiscipline dad ON dadi.DisciplineActionIdentifier = dad.DisciplineActionIdentifier
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_dib ON dib.BehaviorDescriptorId   = d_dib.DescriptorId
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_dil ON di.IncidentLocationDescriptorId   = d_dil.DescriptorId
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_dia ON dad.DisciplineDescriptorId   = d_dia.DescriptorId
+				LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor d_dirt ON di.ReporterDescriptionDescriptorId   = d_dirt.DescriptorId
 		WHERE dbo.Func_ETL_GetSchoolYear(di.IncidentDate) >= 2019 AND
 		    (
 			  	(di.LastModifiedDate > @LastLoadDate AND di.LastModifiedDate <= @NewLoadDate)
 			)
+	
+		
 													
 			
 		--loading legacy data if it has not been loaded.
@@ -147,15 +151,17 @@ BEGIN
 				    ,[IncidentCost]
 
 					,IncidentModifiedDate
+					
+					,_sourceSchoolKey
 
 				    ,[ValidFrom]
 				    ,[ValidTo]
 				    ,[IsCurrent])
 			 SELECT DISTINCT 
 					  CONCAT_WS('|','LegacyDW',Convert(NVARCHAR(MAX),di.[CND_INCIDENT_ID])) AS [_sourceKey],    
-					  dschool.SchoolKey,
-					  dschool.ShortNameOfInstitution,
-					  dschool.NameOfInstitution,
+					  NULL AS SchoolKey,
+				      NULL AS ShortNameOfInstitution,
+				      NULL AS NameOfInstitution,
 					  dbo.Func_ETL_GetSchoolYear(di.[CND_INCIDENT_DATE]) AS [SchoolYear],
 					  di.CND_INCIDENT_DATE AS [IncidentDate],
 					 -- TRY_CAST(di.CND_INCIDENT_TIME AS DATETIME2) ,
@@ -181,23 +187,21 @@ BEGIN
 					  0 AS IncidentCost,
 
 					  '07/01/2015' AS IncidentModifiedDate,
-					  
+
+					  CONCAT_WS('|', 'Ed-Fi', Convert(NVARCHAR(MAX),di.[SKL_SCHOOL_ID])) AS _sourceSchoolKey,
+
 					  '07/01/2015' AS ValidFrom,
 					  GETDATE() AS ValidTo,
 					  0 AS IsCurrent		
 					  
 				--select distinct *
-				FROM  [Raw_LegacyDW].[DisciplineIncidents] di
-					  INNER JOIN dbo.DimSchool dschool ON CONCAT_WS('|', 'Ed-Fi', Convert(NVARCHAR(MAX),di.[SKL_SCHOOL_ID]))   = dschool._sourceKey 
-					  INNER JOIN dbo.DimTime dt ON di.CND_INCIDENT_DATE = dt.SchoolDate
-														 AND dt.SchoolKey is not null   
-														 AND dschool.SchoolKey = dt.SchoolKey	
+				FROM  [Raw_LegacyDW].[DisciplineIncidents] di					  
 				WHERE TRY_CAST(di.CND_INCIDENT_DATE AS DATETIME)  BETWEEN '2015-09-01' AND '2018-06-30'
-
 
 			END
 
-			
+
+			 
 	END TRY
 	BEGIN CATCH
 		

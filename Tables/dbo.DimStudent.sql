@@ -26,6 +26,7 @@ CREATE TABLE [dbo].[DimStudent]
 [SexType_Description] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [SexType_Male_Indicator] [bit] NOT NULL,
 [SexType_Female_Indicator] [bit] NOT NULL,
+[SexType_NonBinary_Indicator] [bit] NOT NULL,
 [SexType_NotSelected_Indicator] [bit] NOT NULL,
 [RaceCode] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [RaceDescription] [nvarchar] (1000) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -59,12 +60,13 @@ CREATE TABLE [dbo].[DimStudent]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimStudent] ADD CONSTRAINT [PK_DimStudent] PRIMARY KEY CLUSTERED  ([StudentKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [StudentKey]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimStudent_CoveringIndex] ON [dbo].[DimStudent] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([StudentKey]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [IX_DimStudent_IsCurrent] ON [dbo].[DimStudent] ([IsCurrent]) ON [PRIMARY]
 GO

@@ -11,6 +11,7 @@ CREATE TABLE [dbo].[DimGradingPeriod]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [int] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO

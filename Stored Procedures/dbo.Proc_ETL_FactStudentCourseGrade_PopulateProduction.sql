@@ -27,8 +27,8 @@ BEGIN
 		 
 
 		--updating staging keys
-		UPDATE s 
-		SET  s.TimeKey = (
+		UPDATE s
+		SET  s.TimeKey =    (
 								SELECT TOP (1) dt.TimeKey
 								FROM dbo.DimTime dt										
 								WHERE EXISTS (SELECT 1 
@@ -41,31 +41,49 @@ BEGIN
 											  )
 								ORDER BY dt.SchoolDate
 							),
-		     s.[GradingPeriodKey] = (
-								SELECT TOP (1) dgp.GradingPeriodKey
-								FROM dbo.DimGradingPeriod dgp
-								WHERE s.[_sourceGradingPeriodey] = dgp._sourceKey									
-									AND s.[ModifiedDate] >= dgp.[ValidFrom]
-									AND s.[ModifiedDate] < dgp.[ValidTo]
-								ORDER BY dgp.[ValidFrom] DESC
-							),
-			s.[StudentSectionKey] = (
-								SELECT TOP (1) dss.StudentSectionKey
-								FROM dbo.DimStudentSection dss
-								WHERE s.[_sourceStudentSectionKey] = dss._sourceKey									
-									AND s.[ModifiedDate] >= dss.[ValidFrom]
-									AND s.[ModifiedDate] < dss.[ValidTo]
-								ORDER BY dss.[ValidFrom] DESC
-							)													             
+		     s.[GradingPeriodKey] = COALESCE(
+												(SELECT TOP (1) dgp.GradingPeriodKey
+												FROM dbo.DimGradingPeriod dgp
+												WHERE s.[_sourceGradingPeriodey] = dgp._sourceKey									
+													AND s.[ModifiedDate] >= dgp.[ValidFrom]
+													AND s.[ModifiedDate] < dgp.[ValidTo]
+												ORDER BY dgp.[ValidFrom] DESC),
+												(SELECT dgp.GradingPeriodKey
+												FROM dbo.DimGradingPeriod dgp
+												WHERE dgp._sourceKey = '')
+											),
+			s.[StudentSectionKey] = COALESCE(
+												(SELECT TOP (1) dss.StudentSectionKey
+												 FROM dbo.DimStudentSection dss
+												 WHERE s.[_sourceStudentSectionKey] = dss._sourceKey									
+													AND s.[ModifiedDate] >= dss.[ValidFrom]
+													AND s.[ModifiedDate] < dss.[ValidTo]
+												 ORDER BY dss.[ValidFrom] DESC),
+												(SELECT dss.StudentSectionKey
+												 FROM dbo.DimStudentSection dss
+												 WHERE dss._sourceKey = '')
+									       )													             
         FROM Staging.StudentCourseGrade s;
 
 		
-
 		DELETE FROM Staging.[StudentCourseGrade]
-		--select * FROM Staging.StudentCourseTranscript
-		WHERE TimeKey IS NULL OR
-			  GradingPeriodKey IS NULL OR
-			  StudentSectionKey IS NULL;
+		WHERE TimeKey IS NULL;
+
+		;WITH DuplicateKeys AS 
+		(
+		  SELECT [TimeKey],[GradingPeriodKey],[StudentSectionKey]
+		  FROM  Staging.[StudentCourseGrade]
+		  GROUP BY [TimeKey],[GradingPeriodKey],[StudentSectionKey]
+		  HAVING COUNT(*) > 1
+		)
+		
+		DELETE sd	
+		FROM Staging.[StudentCourseGrade] sd
+		WHERE EXISTS(SELECT 1 
+		             FROM DuplicateKeys dk 
+					 WHERE sd.[TimeKey] = dk.[TimeKey]
+					   AND sd.[GradingPeriodKey] = dk.[GradingPeriodKey]
+					   AND sd.[StudentSectionKey] = dk.[StudentSectionKey])
 		
 		--dropping the columnstore index
         DROP INDEX IF EXISTS CSI_FactStudentCourseGrades ON dbo.FactStudentCourseGrade;		   
@@ -95,7 +113,7 @@ BEGIN
               StudentSectionKey,
               LetterGradeEarned,
               NumericGradeEarned,
-			  @LineageKey AS [LineageKey]
+			  @LineageKey AS LineageKey
         FROM [Staging].[StudentCourseGrade]
 		
 		
@@ -115,7 +133,7 @@ BEGIN
 		SET 
 			EndTime = SYSDATETIME(),
 			Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date
@@ -123,7 +141,7 @@ BEGIN
 		SET [LoadDate] = @LastDateLoaded
 		WHERE [TableName] = N'dbo.FactStudentCourseGrade';
 
-		
+	
 	    
 		COMMIT TRANSACTION;		
 	END TRY

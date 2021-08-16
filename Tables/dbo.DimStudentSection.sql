@@ -12,6 +12,7 @@ CREATE TABLE [dbo].[DimStudentSection]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO

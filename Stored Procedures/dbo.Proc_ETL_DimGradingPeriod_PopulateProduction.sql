@@ -43,6 +43,7 @@ BEGIN
 				       ValidFrom,
 				       ValidTo,
 				       IsCurrent,
+					   IsLatest,
 				       LineageKey
 				   )
 				   VALUES
@@ -56,15 +57,31 @@ BEGIN
 				      '07/01/2015', -- ValidFrom - datetime
 					  '9999-12-31', -- ValidTo - datetime
 				       0,      -- IsCurrent - bit
+					   1,      -- IsLatest - bit
 				       -1          -- LineageKey - int
 				       )
 				  
 				END
+        --updating keys
+		UPDATE t
+		SET t.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE t._sourceSchoolKey = ds._sourceKey									
+										AND t.ValidFrom >= ds.[ValidFrom]
+										AND t.ValidFrom < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE ds._sourceKey = '')
+							      ) 
+        FROM Staging.GradingPeriod t;
 
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified		
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].DimGradingPeriod AS prod
 			INNER JOIN Staging.GradingPeriod AS stage ON prod._sourceKey = stage._sourceKey
@@ -83,6 +100,7 @@ BEGIN
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent,
+			IsLatest,
 		    LineageKey
 		)
 	
@@ -97,6 +115,7 @@ BEGIN
 			,[ValidFrom]
 			,[ValidTo]
 			,[IsCurrent]
+			,1 AS IsLatest
 		    ,@LineageKey
 		FROM Staging.GradingPeriod
 
@@ -105,7 +124,7 @@ BEGIN
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

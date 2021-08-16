@@ -29,30 +29,40 @@ BEGIN
       
 	    --updating staging keys
 		UPDATE s 
-		SET s.StudentKey = (
-								SELECT TOP (1) ds.StudentKey
-								FROM dbo.DimStudent ds
-								WHERE s._sourceStudentKey = ds._sourceKey									
+		SET s.StudentKey = COALESCE(
+								(SELECT TOP (1) ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
+								 ORDER BY ds.[ValidFrom] DESC),
+								(SELECT ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE ds._sourceKey = '')
 							),
-			s.TimeKey = (
-							SELECT TOP (1) dt.TimeKey
-							FROM dbo.DimTime dt
+			s.TimeKey =  	COALESCE(
+			                 (SELECT TOP (1) dt.TimeKey
+							  FROM dbo.DimTime dt
 									INNER JOIN dbo.DimSchool ds ON dt.SchoolKey = ds.SchoolKey
-							WHERE s._sourceSchoolKey = ds._sourceKey
-								AND s._sourceTimeKey = dt.SchoolDate
-							ORDER BY dt.SchoolDate
-						),
-			s.SchoolKey = (
-								SELECT TOP (1) ds.SchoolKey
-								FROM dbo.DimSchool ds
-								WHERE s._sourceSchoolKey = ds._sourceKey									
-									AND s.[ModifiedDate] >= ds.[ValidFrom]
-									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
-							),		
+							  WHERE s._sourceSchoolKey = ds._sourceKey
+							    AND s._sourceTimeKey = dt.SchoolDate
+							 ORDER BY dt.SchoolDate),
+							 (SELECT TOP (1) dt.TimeKey
+							  FROM dbo.DimTime dt									
+							  WHERE s._sourceTimeKey = dt.SchoolDate
+							 ORDER BY dt.SchoolDate)
+							 ),
+			s.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									FROM dbo.DimSchool ds
+									WHERE s._sourceSchoolKey = ds._sourceKey									
+										AND s.[ModifiedDate] >= ds.[ValidFrom]
+										AND s.[ModifiedDate] < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+										FROM dbo.DimSchool ds
+										WHERE ds._sourceKey = '')
+							      ),		
 			s.AttendanceEventCategoryKey = COALESCE(
 													(
 														SELECT TOP (1) daec.AttendanceEventCategoryKey
@@ -69,12 +79,26 @@ BEGIN
 													)  
 										          )     
         FROM Staging.StudentAttendanceByDay s;
+	
+	    DELETE FROM Staging.StudentAttendanceByDay 
+		WHERE TimeKey IS NULL;
+
+	    ;WITH DuplicateKeys AS 
+		(
+		  SELECT [StudentKey], [TimeKey],[SchoolKey],AttendanceEventCategoryKey
+		  FROM  Staging.StudentAttendanceByDay
+		  GROUP BY [StudentKey], [TimeKey],[SchoolKey],AttendanceEventCategoryKey
+		  HAVING COUNT(*) > 1
+		)
 		
-		DELETE FROM Staging.StudentAttendanceByDay
-		WHERE StudentKey IS NULL OR 
-		      TimeKey IS NULL OR
-			  SchoolKey IS NULL OR
-			  AttendanceEventCategoryKey IS NULL;
+		DELETE sd 
+		FROM Staging.StudentAttendanceByDay sd
+		WHERE EXISTS(SELECT 1 
+		             FROM DuplicateKeys dk 
+					 WHERE sd.[StudentKey] = dk.StudentKey
+					   AND sd.[TimeKey] = dk.[TimeKey]
+					   AND sd.[SchoolKey] = dk.[SchoolKey]
+					   AND sd.AttendanceEventCategoryKey = dk.AttendanceEventCategoryKey)
 
 		--dropping the columnstore index
 		DROP INDEX IF EXISTS CSI_FactStudentAttendanceByDay ON dbo.FactStudentAttendanceByDay;

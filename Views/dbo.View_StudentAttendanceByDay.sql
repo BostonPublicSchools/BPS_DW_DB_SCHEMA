@@ -72,9 +72,6 @@ AS(
 			INNER JOIN dbo.DimStudent ds ON sabd.StudentKey = ds.StudentKey
 			INNER JOIN dbo.DimTime dt ON sabd.TimeKey = dt.TimeKey	 
 			INNER JOIN dbo.DimSchool dsc ON sabd.SchoolKey = dsc.SchoolKey	 			 
-	WHERE 1=1 
-	--AND ds.StudentUniqueId = 341888
-	--AND dt.SchoolDate = '2018-10-26'
 );
 GO
 

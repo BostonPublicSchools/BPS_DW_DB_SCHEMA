@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 --Stored Procedures
 ----------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_Lineage_GetKey]
@@ -54,7 +55,7 @@ BEGIN
 			END;
 
 		-- Select the key of the previously inserted row
-		SELECT MAX([LineageKey]) AS LineageKey
+		SELECT MAX(LineageKey) AS LineageKey
 		FROM dbo.[ETL_Lineage]
 		WHERE 
 			[TableName] = @TableName

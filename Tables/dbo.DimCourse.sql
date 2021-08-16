@@ -20,10 +20,11 @@ CREATE TABLE [dbo].[DimCourse]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [int] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimCourse] ADD CONSTRAINT [PK_DimCourse] PRIMARY KEY CLUSTERED  ([CourseKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [CourseKey]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimCourse_CoveringIndex] ON [dbo].[DimCourse] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([CourseKey]) ON [PRIMARY]
 GO

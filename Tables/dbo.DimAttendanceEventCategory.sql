@@ -12,10 +12,11 @@ CREATE TABLE [dbo].[DimAttendanceEventCategory]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimAttendanceEventCategory] ADD CONSTRAINT [PK_DimAttendanceEventCategory] PRIMARY KEY CLUSTERED  ([AttendanceEventCategoryKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimAttendanceEventCategory_CoveringIndex] ON [dbo].[DimAttendanceEventCategory] ([_sourceKey], [ValidFrom]) INCLUDE ([AttendanceEventCategoryKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimAttendanceEventCategory_CoveringIndex] ON [dbo].[DimAttendanceEventCategory] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [AttendanceEventCategoryKey]) ON [PRIMARY]
 GO

@@ -27,46 +27,74 @@ BEGIN
 		 
 		--updating staging keys
 		UPDATE s 
-		SET s.StudentKey = (
-								SELECT TOP (1) ds.StudentKey
-								FROM dbo.DimStudent ds
-								WHERE s._sourceStudentKey = ds._sourceKey									
+		SET s.StudentKey = COALESCE(
+								(SELECT TOP (1) ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE s._sourceStudentKey = ds._sourceKey									
 									AND s.[ModifiedDate] >= ds.[ValidFrom]
 									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
+								 ORDER BY ds.[ValidFrom] DESC),
+								(SELECT ds.StudentKey
+								 FROM dbo.DimStudent ds
+								 WHERE ds._sourceKey = '')
 							),
-			s.TimeKey = (
-							SELECT TOP (1) dt.TimeKey
-							FROM dbo.DimTime dt
+			s.TimeKey =  	COALESCE(
+			                 (SELECT TOP (1) dt.TimeKey
+							  FROM dbo.DimTime dt
 									INNER JOIN dbo.DimSchool ds ON dt.SchoolKey = ds.SchoolKey
-							WHERE s._sourceSchoolKey = ds._sourceKey
-								AND s._sourceTimeKey = dt.SchoolDate
-							ORDER BY dt.SchoolDate
-						),
-			s.SchoolKey = (
-								SELECT TOP (1) ds.SchoolKey
-								FROM dbo.DimSchool ds
-								WHERE s._sourceSchoolKey = ds._sourceKey									
-									AND s.[ModifiedDate] >= ds.[ValidFrom]
-									AND s.[ModifiedDate] < ds.[ValidTo]
-								ORDER BY ds.[ValidFrom] DESC
-							),		
-			s.DisciplineIncidentKey =(
-										SELECT TOP (1) ddi.DisciplineIncidentKey
+							  WHERE s._sourceSchoolKey = ds._sourceKey
+							    AND s._sourceTimeKey = dt.SchoolDate
+							 ORDER BY dt.SchoolDate),
+							 (SELECT TOP (1) dt.TimeKey
+							  FROM dbo.DimTime dt									
+							  WHERE s._sourceTimeKey = dt.SchoolDate
+							 ORDER BY dt.SchoolDate)
+							 ),
+			s.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									FROM dbo.DimSchool ds
+									WHERE s._sourceSchoolKey = ds._sourceKey									
+										AND s.[ModifiedDate] >= ds.[ValidFrom]
+										AND s.[ModifiedDate] < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+										FROM dbo.DimSchool ds
+										WHERE ds._sourceKey = '')
+							      ),		
+			s.DisciplineIncidentKey =COALESCE(
+										(SELECT TOP (1) ddi.DisciplineIncidentKey
 										FROM dbo.DimDisciplineIncident ddi
 										WHERE s._sourceDisciplineIncidentKey = ddi._sourceKey									
 											AND s.[ModifiedDate] >= ddi.[ValidFrom]
 											AND s.[ModifiedDate] < ddi.[ValidTo]
-										ORDER BY ddi.[ValidFrom] DESC
+										ORDER BY ddi.[ValidFrom] DESC),
+										(SELECT ds.DisciplineIncidentKey
+										FROM dbo.DimDisciplineIncident ds
+										WHERE ds._sourceKey = '')
 									)  
 										             
         FROM Staging.StudentDiscipline s;
 		
-		DELETE FROM Staging.StudentDiscipline
-		WHERE StudentKey IS NULL OR 
-		      TimeKey IS NULL OR
-			  SchoolKey IS NULL OR
-			  DisciplineIncidentKey IS NULL;
+		DELETE FROM  Staging.StudentDiscipline
+		WHERE TimeKey IS NULL;
+
+		;WITH DuplicateKeys AS 
+		(
+		  SELECT [StudentKey], [TimeKey],[SchoolKey],[DisciplineIncidentKey]
+		  FROM  Staging.StudentDiscipline
+		  GROUP BY [StudentKey], [TimeKey],[SchoolKey],[DisciplineIncidentKey]
+		  HAVING COUNT(*) > 1
+		)
+		
+		DELETE sd 
+		FROM Staging.StudentDiscipline sd
+		WHERE EXISTS(SELECT 1 
+		             FROM DuplicateKeys dk 
+					 WHERE sd.[StudentKey] = dk.StudentKey
+					   AND sd.[TimeKey] = dk.[TimeKey]
+					   AND sd.[SchoolKey] = dk.[SchoolKey]
+					   AND sd.[DisciplineIncidentKey] = dk.[DisciplineIncidentKey])
+		    
 
 		--dropping the columnstore index
         DROP INDEX IF EXISTS CSI_FactStudentDiscipline ON dbo.FactStudentDiscipline;
@@ -86,7 +114,7 @@ BEGIN
 		   		,[TimeKey]
 		   		,[SchoolKey]
 		   		,[DisciplineIncidentKey]           
-		   		,[LineageKey])
+		   		,LineageKey)
 		SELECT DISTINCT 
 		    _sourceKey,
 		    StudentKey,
@@ -108,7 +136,7 @@ BEGIN
 							   ,[TimeKey]
 							   ,[SchoolKey]
 							   ,[DisciplineIncidentKey]           
-							   ,[LineageKey])
+							   ,LineageKey)
 
 					SELECT DISTINCT 
 						   'LegacyDW',
@@ -136,7 +164,7 @@ BEGIN
 				,[TimeKey]
 				,[SchoolKey]
 				,[DisciplineIncidentKey]
-				,[LineageKey])
+				,LineageKey)
 				
 
 		-- updating the EndTime to now and status to Success		
@@ -144,7 +172,7 @@ BEGIN
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

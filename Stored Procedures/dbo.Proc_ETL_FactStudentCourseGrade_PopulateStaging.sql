@@ -3,7 +3,6 @@ GO
 SET ANSI_NULLS ON
 GO
 
-
 --Fact StudentCourseGrades
 ----------------------------------------------------------------------------------
 CREATE   PROCEDURE [dbo].[Proc_ETL_FactStudentCourseGrade_PopulateStaging] 
@@ -44,7 +43,7 @@ BEGIN
 		)
 		
 		SELECT DISTINCT
-			   CONCAT_WS('|','Ed-Fi',s.StudentUSI,g.SchoolId,g.LocalCourseCode,g.SchoolYear,g.UniqueSectionCode,td.CodeValue,CONVERT(NVARCHAR, g.BeginDate, 112),gp.GradingPeriodDescriptorId,CONVERT(NVARCHAR, gp.BeginDate, 112)) AS _sourceKey,
+			   CONCAT_WS('|','Ed-Fi',s.StudentUniqueId,g.SchoolId,g.LocalCourseCode,staff.StaffUniqueId,g.SchoolYear,g.SectionIdentifier,g.SessionName,CONVERT(NVARCHAR, g.BeginDate, 112),td_gp.CodeValue,CONVERT(NVARCHAR, gp.BeginDate, 112)) AS _sourceKey,
 			   NULL AS TimeKey,	  			   
 			   NULL AS GradingPeriodKey,
 			   NULL AS StudentSectionKey,
@@ -52,18 +51,22 @@ BEGIN
 			   g.NumericGradeEarned,
 			   g.LastModifiedDate AS ModifiedDate,			   			   
 			   CONCAT_WS('|','Ed-Fi',gp.GradingPeriodDescriptorId,gp.SchoolId,CONVERT(NVARCHAR, gp.BeginDate, 112)) AS _sourceGradingPeriodKey,		          
-			   CONCAT_WS('|','Ed-Fi',s.StudentUSI,g.SchoolId,g.LocalCourseCode,g.SchoolYear,g.UniqueSectionCode,td.CodeValue, CONVERT(NVARCHAR, g.BeginDate, 112) ) AS _sourceStudentSectionKey
-		
-		FROM
-			[EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Grade AS g
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Student AS s ON	g.StudentUSI = s.StudentUSI
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.GradeType AS gt ON g.GradeTypeId = gt.GradeTypeId
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.GradingPeriod AS gp ON g.GradingPeriodDescriptorId = gp.GradingPeriodDescriptorId
-				                                                                         AND g.SequenceOfCourse = gp.PeriodSequence
-																						 AND g.SchoolId = gp.SchoolId
-																						 AND g.SchoolYear = dbo.Func_ETL_GetSchoolYear(gp.BeginDate) 
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor AS td ON g.TermDescriptorId = td.DescriptorId
-		WHERE gt.CodeValue = 'Grading Period'
+			   CONCAT_WS('|','Ed-Fi',s.StudentUniqueId,g.SchoolId,g.LocalCourseCode,staff.StaffUniqueId,g.SchoolYear,g.SectionIdentifier,g.SessionName, CONVERT(NVARCHAR, g.BeginDate, 112) ) AS _sourceStudentSectionKey
+		--select *
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Grade AS g
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student AS s ON	g.StudentUSI = s.StudentUSI
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.GradingPeriod AS gp ON g.GradingPeriodDescriptorId = gp.GradingPeriodDescriptorId
+				                                                                             AND g.GradingPeriodSequence = gp.PeriodSequence
+																						     AND g.SchoolId = gp.SchoolId
+																						     AND g.SchoolYear = gp.SchoolYear
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor AS td_gp ON	gp.GradingPeriodDescriptorId = td_gp.DescriptorId
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor AS td_gt ON	g.GradeTypeDescriptorId = td_gt.DescriptorId
+				INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa ON g.SchoolId = staff_sa.SchoolId
+																									  AND g.LocalCourseCode = staff_sa.LocalCourseCode
+																									  AND g.SchoolYear = staff_sa.SchoolYear
+																									  AND g.SectionIdentifier = staff_sa.SectionIdentifier
+				INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff staff ON staff_sa.StaffUSI = staff.StaffUSI	
+		WHERE td_gt.CodeValue = 'Grading Period'
 		      AND g.SchoolYear >= 2019 
 		      AND (
 			  	    (g.LastModifiedDate > @LastLoadDate AND g.LastModifiedDate <= @NewLoadDate)

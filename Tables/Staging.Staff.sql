@@ -5,6 +5,9 @@ CREATE TABLE [Staging].[Staff]
 [PrimaryElectronicMailAddress] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [PrimaryElectronicMailTypeDescriptor_CodeValue] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [PrimaryElectronicMailTypeDescriptor_Description] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[EducationOrganizationId] [int] NOT NULL,
+[ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [StaffUniqueId] [nvarchar] (32) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [PersonalTitlePrefix] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [FirstName] [nvarchar] (75) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -29,6 +32,8 @@ CREATE TABLE [Staging].[Staff]
 [StaffClassificationDescriptor_CodeValue] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [StaffClassificationDescriptor_CodeDescription] [nvarchar] (100) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [StaffMainInfoModifiedDate] [datetime] NOT NULL,
+[StaffEdOrgAssignmentModifiedDate] [datetime] NOT NULL,
+[StaffEdOrgEmploymentModifiedDate] [datetime] NOT NULL,
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL

@@ -52,7 +52,8 @@ BEGIN
 							   ,[ValidFrom]
 							   ,[ValidTo]
 							   ,[IsCurrent]
-							   ,[LineageKey])
+							   ,[IsLatest]
+							   ,LineageKey)
 				    VALUES
 					(   N'',       -- _sourceKey - nvarchar(50)
 						N'N/A',       -- DistrictSchoolCode - nvarchar(10)
@@ -73,6 +74,7 @@ BEGIN
 						'07/01/2015', -- ValidFrom - datetime
 						'9999-12-31', -- ValidTo - datetime
 						0,      -- IsCurrent - bit
+						1,      -- IsLatest - bit
 						-1          -- LineageKey - int
 						)
 				    
@@ -82,7 +84,8 @@ BEGIN
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified		
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].[DimSchool] AS prod
 			INNER JOIN Staging.School AS stage ON prod._sourceKey = stage._sourceKey
@@ -110,6 +113,7 @@ BEGIN
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent,
+			IsLatest,
 		    LineageKey
 		)
 		SELECT 
@@ -132,6 +136,7 @@ BEGIN
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent,
+			1 AS IsLatest,
 		    @LineageKey
 		FROM Staging.School
 
@@ -140,7 +145,7 @@ BEGIN
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

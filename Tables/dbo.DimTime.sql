@@ -41,12 +41,13 @@ CREATE TABLE [dbo].[DimTime]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimTime] ADD CONSTRAINT [PK_DimTime] PRIMARY KEY CLUSTERED  ([TimeKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimTime_CoveringIndex] ON [dbo].[DimTime] ([SchoolDate], [ValidFrom]) INCLUDE ([TimeKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimTime_CoveringIndex] ON [dbo].[DimTime] ([SchoolKey], [ValidFrom], [ValidTo]) INCLUDE ([TimeKey]) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimTime] ADD CONSTRAINT [FK_DimTime_SchoolKey] FOREIGN KEY ([SchoolKey]) REFERENCES [dbo].[DimSchool] ([SchoolKey])
 GO

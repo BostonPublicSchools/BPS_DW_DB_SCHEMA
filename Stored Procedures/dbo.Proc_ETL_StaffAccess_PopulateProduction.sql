@@ -3,6 +3,7 @@ GO
 SET ANSI_NULLS ON
 GO
 
+
 -- Staff Access
 CREATE   PROCEDURE [dbo].[Proc_ETL_StaffAccess_PopulateProduction]
 AS
@@ -26,24 +27,26 @@ BEGIN
 		
 		DECLARE @currenSchoolYear INT
 		SELECT TOP(1) @currenSchoolYear = syt.SchoolYear
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolYearType syt
+		FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.SchoolYearType syt
 		WHERE syt.CurrentSchoolYear = 1 
 		ORDER BY syt.SchoolYear DESC
 
 		CREATE TABLE #currentYearStaff_DistrictAdmins(StaffSourceKey NVARCHAR(50))
 		INSERT INTO #currentYearStaff_DistrictAdmins(StaffSourceKey)
-		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StaffUSI))
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa
+		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId))
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s ON ssa.StaffUSI = s.StaffUSI
 		WHERE ssa.SchoolYear = @currenSchoolYear
 		  AND ssa.SchoolId = 9035 -- central office BPS;
 
 		CREATE TABLE #currentYearStaff_Teachers(StaffSourceKey NVARCHAR(50))
 		INSERT INTO #currentYearStaff_Teachers(StaffSourceKey)
-		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StaffUSI))
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa
+		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId))
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa		
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s ON ssa.StaffUSI = s.StaffUSI
 		WHERE ssa.SchoolYear = @currenSchoolYear
 		  AND EXISTS (SELECT 1
-		                  FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation s_sect_a
+		                  FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation s_sect_a
 						  WHERE ssa.StaffUSI = s_sect_a.StaffUSI
 						    AND ssa.SchoolYear = s_sect_a.SchoolYear)
           AND NOT EXISTS (SELECT 1
@@ -52,17 +55,18 @@ BEGIN
 
 		CREATE TABLE #currentYearStaff_SchoolAdmins(StaffSourceKey NVARCHAR(50), SchoolSourceKey NVARCHAR(50))
 		INSERT INTO #currentYearStaff_SchoolAdmins(StaffSourceKey, SchoolSourceKey)
-		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StaffUSI)) ,
+		SELECT DISTINCT CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId)) ,
 		                 CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.SchoolId)) 
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSchoolAssociation ssa		
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s ON ssa.StaffUSI = s.StaffUSI
 		WHERE ssa.SchoolYear = @currenSchoolYear
 		  AND ssa.SchoolId <> 9035 -- central office BPS;
 		  AND NOT EXISTS (SELECT 1
 						  FROM  #currentYearStaff_DistrictAdmins da
-						  WHERE  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StaffUSI)) = da.StaffSourceKey)
+						  WHERE  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId)) = da.StaffSourceKey)
 		  AND NOT EXISTS (SELECT 1
 						  FROM  #currentYearStaff_Teachers t
-						  WHERE  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),ssa.StaffUSI)) = t.StaffSourceKey);
+						  WHERE  CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId)) = t.StaffSourceKey);
 
 
 		
@@ -230,15 +234,20 @@ BEGIN
 		  			ELSE dst.GradeLevelDescriptor_CodeValue 
 				  end  AS GradeLevel	      
 		FROM dbo.DimStaff ds
-		     INNER join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation  sa_staff ON ds._sourceKey	= CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa_staff.StaffUSI))  
-			 INNER join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation sa_stud ON sa_staff.UniqueSectionCode = sa_stud.UniqueSectionCode	
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s ON ds._sourceKey	= CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId))  
+		     INNER join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation  sa_staff ON s.StaffUSI = sa_staff.StaffUSI
+			 INNER join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation sa_stud ON sa_staff.SectionIdentifier = sa_stud.SectionIdentifier	
 			                                                                                       AND  sa_staff.SchoolId = sa_stud.SchoolId
 																								   AND  sa_staff.SchoolYear = sa_stud.SchoolYear
-			 INNER JOIN dbo.DimStudent dst ON CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa_stud.StudentUSI)) = dst._sourceKey
+			 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student st ON sa_stud.StudentUSI = st.StudentUSI
+			 INNER JOIN dbo.DimStudent dst ON CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),st.StudentUSI)) = dst._sourceKey
 
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1		  
-		  AND dst.IsCurrent = 1		  
+		  AND dst.IsCurrent = 1		  		    
+		  AND ds.IsLatest = 1
+		  AND dst.IsLatest = 1
+
 		  AND EXISTS (SELECT 1 
 		              FROM #currentYearStaff_Teachers t
 					  WHERE ds._sourceKey = t.StaffSourceKey)
@@ -250,10 +259,10 @@ BEGIN
 
 		--Staff Current Students
 		---------------------------------------------------------------------------------------
-		/*
 		--dropping the columnstore index
 		DROP INDEX IF EXISTS CSI_Derived_StaffCurrentStudents ON [Derived].StaffCurrentStudents;
 
+		/*
 		TRUNCATE TABLE Derived.StaffCurrentStudents
 
 		--district admins
@@ -291,7 +300,7 @@ BEGIN
 			 INNER JOIN dbo.DimStudent dst ON dschool.SchoolKey	 = dst.SchoolKey
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1
-		  AND dst.IsCurrent = 1		  
+		  AND dst.IsCurrent = 1		*/  
 		  
 
 		--teachers
@@ -304,11 +313,13 @@ BEGIN
 		       ds.StaffKey,
 			   dst.StudentKey		      
 		FROM dbo.DimStaff ds
-		     INNER join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation  sa_staff ON ds._sourceKey	= CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa_staff.StaffUSI))  
-			 INNER join [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation sa_stud ON sa_staff.UniqueSectionCode = sa_stud.UniqueSectionCode	
+		     INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff s ON ds._sourceKey	= CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),s.StaffUniqueId))  
+		     INNER join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation  sa_staff ON s.StaffUSI = sa_staff.StaffUSI		     
+			 INNER join [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation sa_stud ON sa_staff.SectionIdentifier = sa_stud.SectionIdentifier	
 			                                                                                       AND  sa_staff.SchoolId = sa_stud.SchoolId
 																								   AND  sa_staff.SchoolYear = sa_stud.SchoolYear
-			 INNER JOIN dbo.DimStudent dst ON CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),sa_stud.StudentUSI)) = dst._sourceKey
+			 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student st ON sa_stud.StudentUSI = st.StudentUSI
+			 INNER JOIN dbo.DimStudent dst ON CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),st.StudentUSI)) = dst._sourceKey
 
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1		  
@@ -320,7 +331,7 @@ BEGIN
 		
 					 
         CREATE COLUMNSTORE INDEX CSI_Derived_StaffCurrentStudents  ON [Derived].StaffCurrentStudents ( [StaffKey],StudentKey)		
-		*/
+		
 	    DROP TABLE IF EXISTS #currentYearStaff_DistrictAdmins;
 		DROP TABLE IF EXISTS #currentYearStaff_SchoolAdmins;
 		DROP TABLE IF EXISTS #currentYearStaff_Teachers;

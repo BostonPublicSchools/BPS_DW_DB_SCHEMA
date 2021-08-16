@@ -25,19 +25,24 @@ BEGIN
 	    
 		BEGIN TRANSACTION;   
 				 
-	     
+	    DECLARE @IsFirstLoad bit = 0;
+
 		--empty row technique
 		--fact table should not have null foreign keys references
 		--this empty record will be used in those cases
 		IF NOT EXISTS (SELECT 1 
 		               FROM dbo.DimStaff WHERE _sourceKey = '')
 				BEGIN
+				   SET @IsFirstLoad = 1;
 				   INSERT INTO [dbo].DimStaff
 				   (
 				       _sourceKey,
 				       PrimaryElectronicMailAddress,
 				       PrimaryElectronicMailTypeDescriptor_CodeValue,
 				       PrimaryElectronicMailTypeDescriptor_Description,
+					   EducationOrganizationId,
+					   ShortNameOfInstitution,
+					   NameOfInstitution,
 				       StaffUniqueId,
 				       PersonalTitlePrefix,
 				       FirstName,
@@ -64,6 +69,7 @@ BEGIN
 				       ValidFrom,
 				       ValidTo,
 				       IsCurrent,
+					   IsLatest,
 				       LineageKey
 				   )
 				   VALUES
@@ -71,6 +77,9 @@ BEGIN
 				       N'N/A',       -- PrimaryElectronicMailAddress - nvarchar(128)
 				       N'N/A',       -- PrimaryElectronicMailTypeDescriptor_CodeValue - nvarchar(128)
 				       N'N/A',       -- PrimaryElectronicMailTypeDescriptor_Description - nvarchar(128)
+					   N'N/A',       -- EducationOrganizationId - int
+					   N'N/A',       -- ShortNameOfInstitution - nvarchar(500)
+					   N'N/A',       -- NameOfInstitution - nvarchar(500)
 				       N'N/A',       -- StaffUniqueId - nvarchar(32)
 				       N'N/A',       -- PersonalTitlePrefix - nvarchar(30)
 				       N'N/A',       -- FirstName - nvarchar(75)
@@ -97,6 +106,7 @@ BEGIN
 				      '07/01/2015', -- ValidFrom - datetime
 					  '9999-12-31', -- ValidTo - datetime
 					   0,      -- IsCurrent - bit
+					   1,      -- IsLatest - bit
 					  -1          -- LineageKey - int
 				       )
 				END
@@ -105,7 +115,8 @@ BEGIN
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified		
 		UPDATE prod
-		SET prod.ValidTo = stage.ValidFrom
+		SET prod.ValidTo = stage.ValidFrom,
+		    prod.IsLatest = 0 
 		FROM 
 			[dbo].[DimSchool] AS prod
 			INNER JOIN Staging.School AS stage ON prod._sourceKey = stage._sourceKey
@@ -118,6 +129,9 @@ BEGIN
 		    PrimaryElectronicMailAddress,
 		    PrimaryElectronicMailTypeDescriptor_CodeValue,
 		    PrimaryElectronicMailTypeDescriptor_Description,
+			EducationOrganizationId,
+		    ShortNameOfInstitution,
+			NameOfInstitution,
 		    StaffUniqueId,
 		    PersonalTitlePrefix,
 		    FirstName,
@@ -144,6 +158,7 @@ BEGIN
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent,
+			IsLatest,
 		    LineageKey
 		)
 		
@@ -152,6 +167,9 @@ BEGIN
 		    PrimaryElectronicMailAddress,
 		    PrimaryElectronicMailTypeDescriptor_CodeValue,
 		    PrimaryElectronicMailTypeDescriptor_Description,
+			EducationOrganizationId,
+		    ShortNameOfInstitution,
+			NameOfInstitution,
 		    StaffUniqueId,
 		    PersonalTitlePrefix,
 		    FirstName,
@@ -177,16 +195,48 @@ BEGIN
 		    StaffClassificationDescriptor_CodeDescription,
 		    ValidFrom,
 		    ValidTo,
-		    IsCurrent,		    
+		    IsCurrent,		
+			1 AS IsLatest,
 		    @LineageKey
 		FROM Staging.Staff
+
+		--during the first load, let's set the IsLatest flag
+		--incremental changes will keep this flag updated after the first load
+		if (@IsFirstLoad = 1)
+		 BEGIN
+		    UPDATE dbo.DimStaff
+			SET IsLatest = 0;
+			
+			;WITH LatestEntry AS
+			(
+				SELECT DISTINCT 
+					   d._sourceKey, 
+					   d.StaffKey AS TheKey, 
+					   d.ValidFrom, 
+					   d.ValidTo,
+					   d.IsLatest,
+					   ROW_NUMBER() OVER (PARTITION BY d._sourceKey ORDER BY d.ValidFrom Desc, d.ValidTo DESC) AS RowRankId
+				FROM dbo.DimStaff d 
+			)
+
+			UPDATE d
+			SET d.IsLatest = 1
+			FROM dbo.DimStaff d
+			WHERE EXISTS (SELECT 1 
+							  FROM LatestEntry le
+							  WHERE d.StaffKey = le.TheKey 
+								AND le.RowRankId = 1);
+		 END
+         
+		
+
 
 		-- updating the EndTime to now and status to Success		
 		UPDATE dbo.ETL_Lineage
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

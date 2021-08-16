@@ -25,12 +25,14 @@ BEGIN
 	    
 		BEGIN TRANSACTION;   
 		
+		DECLARE @IsFirstLoad bit = 0;
 		--empty row technique
 		--fact table should not have null foreign keys references
 		--this empty record will be used in those cases
 		IF NOT EXISTS (SELECT 1 
 		               FROM dbo.DimStudent WHERE _sourceKey = '')
 				BEGIN
+				   SET @IsFirstLoad = 1;
 				   INSERT INTO [dbo].DimStudent
 				   (
 				       _sourceKey,
@@ -58,6 +60,7 @@ BEGIN
 				       SexType_Description,
 				       SexType_Male_Indicator,
 				       SexType_Female_Indicator,
+					   SexType_NonBinary_Indicator,
 				       SexType_NotSelected_Indicator,
 				       RaceCode,
 				       RaceDescription,
@@ -91,6 +94,7 @@ BEGIN
 				       ValidFrom,
 				       ValidTo,
 				       IsCurrent,
+					   IsLatest,
 				       LineageKey
 				   )
 				   VALUES
@@ -119,6 +123,7 @@ BEGIN
 				       N'N/A',           -- SexType_Description - nvarchar(100)
 				       0,          -- SexType_Male_Indicator - bit
 				       0,          -- SexType_Female_Indicator - bit
+					   0,          -- SexType_NonBinary_Indicator - bit					   
 				       0,          -- SexType_NotSelected_Indicator - bit
 				       N'N/A',           -- RaceCode - nvarchar(1000)
 				       N'N/A',           -- RaceDescription - nvarchar(1000)
@@ -152,16 +157,39 @@ BEGIN
 				      '07/01/2015', -- ValidFrom - datetime
 					  '9999-12-31', -- ValidTo - datetime
 					   0,      -- IsCurrent - bit
+					   1,      -- IsLatest - bit
 					   -1          -- LineageKey - int
 				       )
 				    
 				END
 
+        --updating keys
+		UPDATE t
+		SET t.SchoolKey =  COALESCE(
+									(SELECT TOP (1) ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE t._sourceSchoolKey = ds._sourceKey									
+										AND t.ValidFrom >= ds.[ValidFrom]
+										AND t.ValidFrom < ds.[ValidTo]
+									ORDER BY ds.[ValidFrom] DESC),
+									(SELECT ds.SchoolKey
+									 FROM dbo.DimSchool ds
+									 WHERE ds._sourceKey = '')
+							      ) 
+        FROM Staging.Student t;
+				
+        --updating school names
+		UPDATE s
+		SET [ShortNameOfInstitution] = ds.ShortNameOfInstitution,
+		    [NameOfInstitution] = ds.NameOfInstitution
+		FROM Staging.Student s
+		     INNER JOIN dbo.DimSchool ds ON s.SchoolKey = ds.SchoolKey;
+
 		--staging table holds newer records. 
 		--the matching prod records will be valid until the date in which the newest data change was identified
 		UPDATE prod
 		SET prod.ValidTo = stage.ValidFrom,
-		    prod.IsCurrent = 0
+		    prod.IsLatest = 0
 		FROM 
 			[dbo].[DimStudent] AS prod
 			INNER JOIN Staging.Student AS stage ON prod._sourceKey = stage._sourceKey
@@ -195,6 +223,7 @@ BEGIN
            ,[SexType_Description]
            ,[SexType_Male_Indicator]
            ,[SexType_Female_Indicator]
+		   ,[SexType_NonBinary_Indicator]
            ,[SexType_NotSelected_Indicator]
            ,[RaceCode]
            ,[RaceDescription]
@@ -228,7 +257,8 @@ BEGIN
            ,[ValidFrom]
            ,[ValidTo]
            ,[IsCurrent]
-           ,[LineageKey]
+		   ,[IsLatest]
+           ,LineageKey
 		)
 		SELECT 
 		    [_sourceKey]
@@ -256,6 +286,7 @@ BEGIN
            ,[SexType_Description]
            ,[SexType_Male_Indicator]
            ,[SexType_Female_Indicator]
+		   ,[SexType_NonBinary_Indicator]
            ,[SexType_NotSelected_Indicator]
            ,[RaceCode]
            ,[RaceDescription]
@@ -288,49 +319,47 @@ BEGIN
            ,[ExitWithdrawCode]
            ,[ValidFrom]
            ,[ValidTo]
-           ,[IsCurrent]           
+           ,[IsCurrent]       
+		   ,1 AS [IsLatest]
 		   ,@LineageKey
 		FROM Staging.Student
 
-		--BPS is having data quality issues with exit/withdrawal dates in the ODS
-		--this is patch to overcome the problem and maintain the data clean momentarily
-		--------------------------------------------------------------------------------------------------
-		UPDATE dbo.DimStudent
-		SET IsCurrent = 0;
+		--during the first load, let's set the IsLatest flag
+		--incremental changes will keep this flag updated after the first load
+		if (@IsFirstLoad = 1)
+		 BEGIN
+		    --Students
+			UPDATE dbo.DimStudent
+			SET IsLatest = 0;
 
-		DECLARE @currentSchoolYear INT 
-		SELECT TOP (1) @currentSchoolYear =  SchoolYear 
-		FROM  [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.SchoolYearType syt
-		WHERE syt.CurrentSchoolYear = 1;
-		
 
-		;WITH LatestEntryDatePerStudent AS
-        (
-			SELECT DISTINCT 
-				   ds.StudentUniqueId, 
-				   ds.StudentKey, 
-				   ROW_NUMBER() OVER (PARTITION BY ds.StudentUniqueId ORDER BY ds.EntryDate DESC) AS RowRankId
-			FROM dbo.DimStudent ds 
-			WHERE ds.EntrySchoolYear = @currentSchoolYear
-		)
+			;WITH LatestEntry AS
+			(
+				SELECT DISTINCT 
+					   d._sourceKey, 
+					   d.StudentKey AS TheKey, 
+					   d.ValidFrom, 
+					   d.ValidTo,
+					   d.IsLatest,
+					   ROW_NUMBER() OVER (PARTITION BY d._sourceKey ORDER BY d.ValidFrom Desc, d.ValidTo DESC) AS RowRankId
+				FROM dbo.DimStudent d 
+			)
 
-		UPDATE ds 
-		SET ds.IsCurrent = 1
-		FROM dbo.DimStudent ds 
-		WHERE ds.EntrySchoolYear = @currentSchoolYear
-		      AND EXISTS (SELECT 1 
-			              FROM LatestEntryDatePerStudent ledps 
-						  WHERE ds.StudentKey = ledps.StudentKey 
-						    AND ledps.RowRankId = 1);
-		---------------------------------------------------------------------------------------------------
-
+			UPDATE d
+			SET d.IsLatest = 1
+			FROM dbo.DimStudent d
+			WHERE EXISTS (SELECT 1 
+							  FROM LatestEntry le
+							  WHERE d.StudentKey = le.TheKey 
+								AND le.RowRankId = 1);
+		 END
 
 		-- updating the EndTime to now and status to Success		
 		UPDATE dbo.ETL_Lineage
 			SET 
 				EndTime = SYSDATETIME(),
 				Status = 'S' -- success
-		WHERE [LineageKey] = @LineageKey;
+		WHERE LineageKey = @LineageKey;
 	
 	
 		-- Update the LoadDates table with the most current load date

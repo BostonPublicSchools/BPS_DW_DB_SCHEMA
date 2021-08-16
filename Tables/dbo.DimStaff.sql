@@ -5,6 +5,9 @@ CREATE TABLE [dbo].[DimStaff]
 [PrimaryElectronicMailAddress] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [PrimaryElectronicMailTypeDescriptor_CodeValue] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [PrimaryElectronicMailTypeDescriptor_Description] [nvarchar] (128) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[EducationOrganizationId] [int] NOT NULL,
+[ShortNameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+[NameOfInstitution] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [StaffUniqueId] [nvarchar] (32) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [PersonalTitlePrefix] [nvarchar] (30) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 [FirstName] [nvarchar] (75) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
@@ -31,10 +34,11 @@ CREATE TABLE [dbo].[DimStaff]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimStaff] ADD CONSTRAINT [PK_DimStaff] PRIMARY KEY CLUSTERED  ([StaffKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimSatff_CoveringIndex] ON [dbo].[DimStaff] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [StaffKey]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimStaff_CoveringIndex] ON [dbo].[DimStaff] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([StaffKey]) ON [PRIMARY]
 GO

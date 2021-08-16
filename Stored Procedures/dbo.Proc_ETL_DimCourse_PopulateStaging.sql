@@ -31,7 +31,6 @@ BEGIN
 		INSERT INTO Staging.Course
 		(
 		    _sourceKey,
-			LocalCourseCode,
 		    CourseCode,
 		    CourseTitle,
 		    CourseDescription,
@@ -55,21 +54,20 @@ BEGIN
         --declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT DISTINCT 
 			   CONCAT_WS('|','Ed-Fi',Convert(NVARCHAR(MAX),c.CourseCode)) AS [_sourceKey],
-			   co.LocalCourseCode,
 			   c.CourseCode,
 			   c.CourseTitle,
 			   c.CourseDescription,
-			   COALESCE(clct.CodeValue,'N/A') AS [CourseLevelCharacteristicTypeDescriptor_CodeValue],
-			   COALESCE(clct.[Description],'N/A') AS [CourseLevelCharacteristicTypeDescriptor_Descriptor],
+			   COALESCE(clct_d.CodeValue,'N/A') AS [CourseLevelCharacteristicTypeDescriptor_CodeValue],
+			   COALESCE(clct_d.[Description],'N/A') AS [CourseLevelCharacteristicTypeDescriptor_Descriptor],
 
-			   COALESCE(ast.CodeValue,'N/A') AS [AcademicSubjectDescriptor_CodeValue],
-			   COALESCE(ast.[Description],'N/A') AS [AcademicSubjectDescriptor_Descriptor],
+			   COALESCE(ast_d.CodeValue,'N/A') AS [AcademicSubjectDescriptor_CodeValue],
+			   COALESCE(ast_d.[Description],'N/A') AS [AcademicSubjectDescriptor_Descriptor],
 			   COALESCE(c.HighSchoolCourseRequirement,0) AS [HighSchoolCourseRequirement_Indicator],
 
 			   c.MinimumAvailableCredits,
 			   c.MaximumAvailableCredits,
-			   COALESCE(cgat.CodeValue,'N/A')  AS GPAApplicabilityType_CodeValue,
-			   COALESCE(cgat.[Description],'N/A') AS GPAApplicabilityType_Description,
+			   COALESCE(cgat_d.CodeValue,'N/A')  AS GPAApplicabilityType_CodeValue,
+			   COALESCE(cgat_d.[Description],'N/A') AS GPAApplicabilityType_Description,
 	   
 			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_CodeValue],
 			   'N/A' AS [SecondaryCourseLevelCharacteristicTypeDescriptor_Description],
@@ -88,17 +86,19 @@ BEGIN
 			   '12/31/9999' as ValidTo,
 				1 AS IsCurrent
 		--select *
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
-		     INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co ON c.CourseCode = co.CourseCode
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristicType clct ON clc.CourseLevelCharacteristicTypeId = clct.CourseLevelCharacteristicTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.AcademicSubjectType ast ON c.AcademicSubjectDescriptorId = ast.AcademicSubjectTypeId
-			 LEFT JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseGPAApplicabilityType cgat ON c.CourseGPAApplicabilityTypeId = cgat.CourseGPAApplicabilityTypeId
-		WHERE co.SchoolYear >=2019 
-		      AND
-			  (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Course c --WHERE c.CourseCode = '094'
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CourseLevelCharacteristic clc ON c.CourseCode = clc.CourseCode
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor clct_d ON clc.CourseLevelCharacteristicDescriptorId = clct_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor ast_d ON c.AcademicSubjectDescriptorId = ast_d.DescriptorId
+			 LEFT JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Descriptor cgat_d ON c.CourseGPAApplicabilityDescriptorId = cgat_d.DescriptorId
+		WHERE EXISTS (SELECT 1 
+					  FROM  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CourseOffering co 
+					  WHERE c.CourseCode = co.CourseCode
+						AND co.SchoolYear >= 2019) AND
+			 (c.LastModifiedDate > @LastLoadDate AND c.LastModifiedDate <= @NewLoadDate)
 			
-							
+					
+					
 		
 		--[v34_EdFi_BPS_Production_Ods]
 		--loading legacy data if it has not been loaded.

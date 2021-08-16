@@ -28,40 +28,7 @@ BEGIN
 
 		--declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		TRUNCATE TABLE Staging.StudentSection
-		SELECT   DISTINCT 
-            ssa.StudentUSI,
-            ssa.SchoolId, 
-			ssa.LocalCourseCode,
-			ssa.SchoolYear,
-			staff_sa.StaffUSI,
-			ssa.UniqueSectionCode,
-			ssa.TermDescriptorId,
-			ssa.BeginDate,
-			ssa.EndDate,
-			CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(ssa.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS LastModifiedDate,
-			--Making sure the first time, the ValidFrom is set to beginning of time 
-			CASE WHEN @LastLoadDate <> '07/01/2015' THEN
-				        (SELECT MAX(t) FROM
-                            (VALUES
-                            (ssa.LastModifiedDate)                             
-                            ) AS [MaxLastModifiedDate](t)
-                        )
-				ELSE 
-					    '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
-			END AS ValidFrom,
-			'12/31/9999' AS ValidTo,
-			1 AS IsCurrent
-			INTO #studentSectionAssociation
-		FROM [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation ssa
-				 INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa ON ssa.SchoolId = staff_sa.SchoolId
-																											  AND ssa.LocalCourseCode = staff_sa.LocalCourseCode
-																											  AND ssa.SchoolYear = staff_sa.SchoolYear
-																											  AND ssa.UniqueSectionCode = staff_sa.UniqueSectionCode
-																											  AND ssa.TermDescriptorId = staff_sa.TermDescriptorId
-		WHERE ssa.SchoolYear >= 2019
-				AND (
-			  					(ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)
-   					)
+		
 
 
 		INSERT INTO Staging.StudentSection
@@ -75,6 +42,12 @@ BEGIN
 		    StudentSectionEndDate,
 		    SchoolYear,
 		    ModifiedDate,
+
+			[_sourceStudentKey],
+			[_sourceSchoolKey],
+			[_sourceCourseKey],
+			[_sourceStaffKey],
+
 		    ValidFrom,
 		    ValidTo,
 		    IsCurrent
@@ -82,39 +55,50 @@ BEGIN
 			
 		--declare @LastLoadDate datetime = '07/01/2015' declare @NewLoadDate datetime = getdate()
 		SELECT 
-		    CONCAT_WS('|','Ed-Fi',ssa.StudentUSI,ssa.SchoolId,ssa.LocalCourseCode,ssa.SchoolYear,ssa.UniqueSectionCode,td.CodeValue,CONVERT(NVARCHAR, ssa.BeginDate, 112) ) [_sourceKey],			
-			ds.StudentKey,
-			dschool.SchoolKey,
-			dc.CourseKey,
-			dstaff.StaffKey,	        
+		    CONCAT_WS('|','Ed-Fi',s.StudentUniqueId,ssa.SchoolId,ssa.LocalCourseCode,staff.StaffUniqueId,ssa.SchoolYear,ssa.SectionIdentifier,ssa.SessionName,CONVERT(NVARCHAR, ssa.BeginDate, 112) ) [_sourceKey],			
+			NULL AS StudentKey,
+			NULL AS SchoolKey,
+			NULL AS CourseKey,
+			NULL AS StaffKey,	        
 	        ssa.BeginDate,
 			ssa.EndDate,
 			ssa.SchoolYear,
 
-			ssa.LastModifiedDate,
-			ssa.ValidFrom,
-			ssa.ValidTo,
-			ssa.IsCurrent		
-		--SELECT  *
-		FROM
-			    #studentSectionAssociation AS ssa
-				INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.CourseOffering co ON ssa.SchoolId = co.SchoolId
+			CASE WHEN @LastLoadDate <> '07/01/2015' THEN COALESCE(ssa.LastModifiedDate,'07/01/2015') ELSE '07/01/2015' END AS LastModifiedDate,
+
+			CONCAT_WS('|', 'Ed-Fi', s.StudentUniqueId)  AS [_sourceStudentKey],
+			CONCAT_WS('|', 'Ed-Fi', ssa.SchoolId)  AS [_sourceSchoolKey],
+			CONCAT_WS('|', 'Ed-Fi', co.CourseCode) AS [_sourceCourseKey],
+			CONCAT_WS('|', 'Ed-Fi', staff.StaffUniqueId) AS [_sourceStaffKey],
+
+			CASE WHEN @LastLoadDate <> '07/01/2015' THEN
+				        (SELECT MAX(t) FROM
+                            (VALUES
+                            (ssa.LastModifiedDate)                             
+                            ) AS [MaxLastModifiedDate](t)
+                        )
+				ELSE 
+					    '07/01/2015' -- setting the validFrom to beggining of time during thre first load. 
+			END AS ValidFrom,
+			'12/31/9999' AS ValidTo,
+			1 AS IsCurrent	
+		FROM [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Student s
+		         INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StudentSectionAssociation ssa ON s.StudentUSI = ssa.StudentUSI
+				 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.StaffSectionAssociation staff_sa ON ssa.SchoolId = staff_sa.SchoolId
+																											  AND ssa.LocalCourseCode = staff_sa.LocalCourseCode
+																											  AND ssa.SchoolYear = staff_sa.SchoolYear
+																											  AND ssa.SectionIdentifier = staff_sa.SectionIdentifier
+																											  AND ssa.SessionName = staff_sa.SessionName
+				 INNER JOIN  [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.Staff staff ON staff_sa.StaffUSI = staff.StaffUSI
+				 INNER JOIN [EDFISQL01].[v34_EdFi_BPS_Production_Ods].edfi.CourseOffering co ON ssa.SchoolId = co.SchoolId
 				                                                                       AND ssa.LocalCourseCode = co.LocalCourseCode
 																					   AND ssa.SchoolYear = co.SchoolYear
-																					   AND ssa.TermDescriptorId = co.TermDescriptorId
-		        INNER JOIN [EDFISQL01].[EdFi_BPS_Production_Ods].edfi.Descriptor td ON co.TermDescriptorId = td.DescriptorId
-			
-																									  
-				INNER JOIN dbo.DimStudent ds  ON CONCAT_WS('|', 'Ed-Fi', ssa.StudentUSI)   = ds._sourceKey
-															      AND  ssa.BeginDate BETWEEN ds.ValidFrom AND ds.ValidTo
-				INNER JOIN dbo.DimSchool dschool ON CONCAT_WS('|', 'Ed-Fi', ssa.SchoolId) = dschool._sourceKey
-				                                                  AND  ssa.BeginDate BETWEEN dschool.ValidFrom AND dschool.ValidTo
-				INNER JOIN dbo.DimCourse dc ON CONCAT_WS('|', 'Ed-Fi', co.CourseCode) = dc._sourceKey
-				                                                  AND  ssa.BeginDate BETWEEN dc.ValidFrom AND dc.ValidTo
-				INNER JOIN dbo.DimStaff dstaff ON CONCAT_WS('|', 'Ed-Fi', ssa.StaffUSI) = dstaff._sourceKey
-				                                                  AND  ssa.BeginDate BETWEEN dstaff.ValidFrom AND dstaff.ValidTo
+																					   AND ssa.SessionName = co.SessionName	
+		WHERE ssa.SchoolYear >= 2019
+				AND (
+			  		 (ssa.LastModifiedDate > @LastLoadDate AND ssa.LastModifiedDate <= @NewLoadDate)
+   					)
 		
-		DROP TABLE #studentSectionAssociation
 	END TRY
 	BEGIN CATCH
 		

@@ -25,10 +25,11 @@ CREATE TABLE [dbo].[DimDisciplineIncident]
 [ValidFrom] [datetime] NOT NULL,
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
+[IsLatest] [bit] NOT NULL,
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[DimDisciplineIncident] ADD CONSTRAINT [PK_DimDisciplineIncident] PRIMARY KEY CLUSTERED  ([DisciplineIncidentKey]) ON [PRIMARY]
 GO
-CREATE NONCLUSTERED INDEX [DimDisciplineIncident_CoveringIndex] ON [dbo].[DimDisciplineIncident] ([_sourceKey], [ValidFrom]) INCLUDE ([DisciplineIncidentKey], [ValidTo]) ON [PRIMARY]
+CREATE NONCLUSTERED INDEX [DimDisciplineIncident_CoveringIndex] ON [dbo].[DimDisciplineIncident] ([_sourceKey], [ValidFrom], [ValidTo]) INCLUDE ([DisciplineIncidentKey]) ON [PRIMARY]
 GO
