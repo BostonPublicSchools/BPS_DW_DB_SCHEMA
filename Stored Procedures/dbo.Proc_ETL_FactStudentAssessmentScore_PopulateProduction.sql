@@ -101,7 +101,7 @@ BEGIN
 						   ,LiteralScoreResult
 						   ,LineageKey)
 		SELECT DISTINCT 
-		   [_sourceKey],
+		  LEN( [_sourceKey]),
 		   [StudentKey],
 		   [TimeKey],
 		   [AssessmentKey],
@@ -109,9 +109,9 @@ BEGIN
 		   IntegerScoreResult,
 		   DecimalScoreResult,
 		   LiteralScoreResult,
-		   	@lineageKey AS LineageKey
+		   @lineageKey AS LineageKey
 		FROM Staging.StudentAssessmentScore
-
+		ORDER BY LEN( [_sourceKey]) DESC 
 		--loading from legacy dw just once
 		IF (NOT EXISTS(SELECT 1  
 		               FROM dbo.FactStudentAssessmentScore 

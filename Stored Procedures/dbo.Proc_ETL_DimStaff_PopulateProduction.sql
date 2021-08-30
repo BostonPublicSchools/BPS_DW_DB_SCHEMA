@@ -77,7 +77,7 @@ BEGIN
 				       N'N/A',       -- PrimaryElectronicMailAddress - nvarchar(128)
 				       N'N/A',       -- PrimaryElectronicMailTypeDescriptor_CodeValue - nvarchar(128)
 				       N'N/A',       -- PrimaryElectronicMailTypeDescriptor_Description - nvarchar(128)
-					   N'N/A',       -- EducationOrganizationId - int
+					   0,            -- EducationOrganizationId - int
 					   N'N/A',       -- ShortNameOfInstitution - nvarchar(500)
 					   N'N/A',       -- NameOfInstitution - nvarchar(500)
 				       N'N/A',       -- StaffUniqueId - nvarchar(32)
@@ -215,7 +215,7 @@ BEGIN
 					   d.ValidFrom, 
 					   d.ValidTo,
 					   d.IsLatest,
-					   ROW_NUMBER() OVER (PARTITION BY d._sourceKey ORDER BY d.ValidFrom Desc, d.ValidTo DESC) AS RowRankId
+					   ROW_NUMBER() OVER (PARTITION BY d._sourceKey ORDER BY d.ValidFrom Desc, d.ValidTo DESC, d.IsCurrent) AS RowRankId
 				FROM dbo.DimStaff d 
 			)
 

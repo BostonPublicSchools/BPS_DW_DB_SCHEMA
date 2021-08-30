@@ -92,9 +92,11 @@ BEGIN
 		FROM dbo.DimStaff ds
 		     CROSS JOIN dbo.DimSchool dschool
 		WHERE 1=1 --ssa.StaffUSI = 9786
-		  AND ds.IsCurrent = 1		  
+		  AND ds.IsCurrent = 1				  
 		  AND dschool.DistrictSchoolCode <>  '9035' -- central office BPS
 		  AND dschool.IsCurrent = 1
+		  AND ds.IsLatest = 1
+		  AND dschool.IsLatest = 1
 		  AND EXISTS (SELECT 1 
 		              FROM #currentYearStaff_DistrictAdmins t
 					  WHERE ds._sourceKey = t.StaffSourceKey)
@@ -115,6 +117,8 @@ BEGIN
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1		  
 		  AND dschool.IsCurrent = 1
+		  AND ds.IsLatest = 1
+		  AND dschool.IsLatest = 1
         
 	    --re-creating the columnstore index
 		CREATE COLUMNSTORE INDEX CSI_Derived_StaffCurrentSchool  ON [Derived].[StaffCurrentSchools] ( [StaffKey],[SchoolKey])		
@@ -165,6 +169,7 @@ BEGIN
 			 CROSS JOIN allGradeLevels scgl 
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1
+		  AND ds.IsLatest = 1
 		  AND EXISTS (SELECT 1 
 		              FROM #currentYearStaff_DistrictAdmins t
 					  WHERE ds._sourceKey = t.StaffSourceKey)
@@ -204,7 +209,10 @@ BEGIN
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1		  
 		  AND dst.IsCurrent = 1
-		  AND dschool.IsCurrent = 1;
+		  AND dschool.IsCurrent = 1
+		  AND ds.IsLatest = 1
+		  AND dschool.IsLatest = 1
+		  AND dst.IsLatest=1;
 		
 
 	   --teachers
@@ -279,6 +287,8 @@ BEGIN
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1
 		  AND dst.IsCurrent = 1
+		  AND ds.IsLatest = 1		  
+		  AND dst.IsLatest=1		  
 		  AND EXISTS (SELECT 1 
 		              FROM #currentYearStaff_DistrictAdmins t
 					  WHERE ds._sourceKey = t.StaffSourceKey)
@@ -300,7 +310,10 @@ BEGIN
 			 INNER JOIN dbo.DimStudent dst ON dschool.SchoolKey	 = dst.SchoolKey
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1
-		  AND dst.IsCurrent = 1		*/  
+		  AND dst.IsCurrent = 1
+		  AND ds.IsLatest = 1		  
+		  AND dst.IsLatest=1
+		  */  
 		  
 
 		--teachers
@@ -324,6 +337,8 @@ BEGIN
 		WHERE 1=1 --ssa.StaffUSI = 9786
 		  AND ds.IsCurrent = 1		  
 		  AND dst.IsCurrent = 1		  
+		  AND ds.IsLatest = 1		  
+		  AND dst.IsLatest=1
 		  AND EXISTS (SELECT 1 
 		              FROM #currentYearStaff_Teachers t
 					  WHERE ds._sourceKey = t.StaffSourceKey)
