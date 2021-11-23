@@ -50,36 +50,65 @@ begin
 
     set identity_insert BPSDashboard.dbo.SAT_School_Attendance off;
 
-    update BPSDashboard.dbo.SAT_School_Attendance
-    set SAT_SKL_ID = sa.SAT_SKL_ID
-      , SAT_BATCH = sa.SAT_BATCH
-      , SAT_RECORD_DATE = sa.SAT_RECORD_DATE
-      , SAT_CREATE_DATE = getdate()
-      , SAT_COUNT_TOTAL = sa.SAT_COUNT_TOTAL
-      , SAT_COUNT_PRESENT = sa.SAT_COUNT_PRESENT
-      , SAT_COUNT_ABSENT = sa.SAT_COUNT_ABSENT
-      , SAT_COUNT_TARDY = sa.SAT_COUNT_TARDY
-    from
-    (
-        select SAT_SKL_ID
-             , SAT_BATCH
-             , SAT_RECORD_DATE
-             , SAT_COUNT_TOTAL
-             , SAT_COUNT_PRESENT
-             , SAT_COUNT_ABSENT
-             , SAT_COUNT_TARDY
-        from BPSDashboard.staging.SAT_School_Attendance
-        except
-        select SAT_SKL_ID
-             , SAT_BATCH
-             , SAT_RECORD_DATE
-             , SAT_COUNT_TOTAL
-             , SAT_COUNT_PRESENT
-             , SAT_COUNT_ABSENT
-             , SAT_COUNT_TARDY
-        from BPSDashboard.dbo.SAT_School_Attendance
-    ) sa
-    where BPSDashboard.dbo.SAT_School_Attendance.SAT_SKL_ID = sa.SAT_SKL_ID
-          and BPSDashboard.dbo.SAT_School_Attendance.SAT_RECORD_DATE = sa.SAT_RECORD_DATE;
+    declare @sklId        int
+          , @recordDate   date
+          , @countTotal   int
+          , @countPresent int
+          , @countAbsent  int
+          , @countTardy   int
+          , @batch        varchar(25);
+
+    declare db_cursor cursor for
+    select SAT_SKL_ID
+         , SAT_RECORD_DATE
+         , SAT_COUNT_TOTAL
+         , SAT_COUNT_PRESENT
+         , SAT_COUNT_ABSENT
+         , SAT_COUNT_TARDY
+         , SAT_BATCH
+    from BPSDashboard.staging.SAT_School_Attendance
+    except
+    select SAT_SKL_ID
+         , SAT_RECORD_DATE
+         , SAT_COUNT_TOTAL
+         , SAT_COUNT_PRESENT
+         , SAT_COUNT_ABSENT
+         , SAT_COUNT_TARDY
+         , SAT_BATCH
+    from BPSDashboard.dbo.SAT_School_Attendance;
+
+    open db_cursor;
+    fetch next from db_cursor
+    into @sklId
+       , @recordDate
+       , @countTotal
+       , @countPresent
+	   , @countAbsent
+       , @countTardy
+       , @batch;
+    while @@fetch_status = 0
+    begin
+        update BPSDashboard.dbo.SAT_School_Attendance
+        set SAT_BATCH = @batch
+          , SAT_CREATE_DATE = getdate()
+          , SAT_COUNT_TOTAL = @countTotal
+          , SAT_COUNT_PRESENT = @countPresent
+          , SAT_COUNT_ABSENT = @countAbsent
+          , SAT_COUNT_TARDY = @countTardy
+        where SAT_SKL_ID = @sklId
+              and SAT_RECORD_DATE = @recordDate;
+
+        fetch next from db_cursor
+        into @sklId
+           , @recordDate
+           , @countTotal
+           , @countPresent
+		   , @countAbsent
+           , @countTardy
+           , @batch;
+    end;
+
+    close db_cursor;
+    deallocate db_cursor;
 end;
 GO
