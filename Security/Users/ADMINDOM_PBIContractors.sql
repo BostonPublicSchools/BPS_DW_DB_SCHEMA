@@ -1,0 +1,5 @@
+IF NOT EXISTS (SELECT * FROM master.dbo.syslogins WHERE loginname = N'ADMINDOM\PBIContractors')
+CREATE LOGIN [ADMINDOM\PBIContractors] FROM WINDOWS
+GO
+CREATE USER [ADMINDOM\PBIContractors] FOR LOGIN [ADMINDOM\PBIContractors]
+GO

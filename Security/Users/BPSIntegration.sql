@@ -1,0 +1,2 @@
+CREATE USER [BPSIntegration] WITHOUT LOGIN
+GO
