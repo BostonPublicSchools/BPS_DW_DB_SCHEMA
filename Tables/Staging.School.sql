@@ -17,6 +17,7 @@ CREATE TABLE [Staging].[School]
 [TitleIPartASchoolDesignation_Indicator] [bit] NOT NULL,
 [OperationalStatusTypeDescriptor_CodeValue] [nvarchar] (50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 [OperationalStatusTypeDescriptor_Description] [nvarchar] (1024) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+[BPSSchool_Indicator] [bit] NOT NULL,
 [SchoolNameModifiedDate] [datetime] NOT NULL,
 [SchoolOperationalStatusTypeModifiedDate] [datetime] NOT NULL,
 [SchoolCategoryModifiedDate] [datetime] NOT NULL,
@@ -26,5 +27,5 @@ CREATE TABLE [Staging].[School]
 [IsCurrent] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Staging].[School] ADD CONSTRAINT [PK_StagingSchool] PRIMARY KEY CLUSTERED  ([SchoolKey]) ON [PRIMARY]
+ALTER TABLE [Staging].[School] ADD CONSTRAINT [PK_StagingSchool] PRIMARY KEY CLUSTERED ([SchoolKey]) ON [PRIMARY]
 GO

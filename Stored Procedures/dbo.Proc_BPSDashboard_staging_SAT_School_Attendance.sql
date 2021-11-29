@@ -20,11 +20,7 @@ begin
       , SAT_COUNT_TARDY
     )
     select
-        (
-            select SKL_ID
-            from BPSDashboard.staging.SKL_School
-            where SKL_SIS_ID = DimSchool.SchoolKey
-        )
+	 DimSchool.SchoolKey
       , null
       , SchoolDate
       , getdate()
@@ -81,7 +77,6 @@ begin
            , DimSchool.SchoolKey
            , DistrictSchoolCode
            , DimSchool.ShortNameOfInstitution
-    order by SchoolDate desc
-           , DimSchool.ShortNameOfInstitution;
+    order by SchoolDate desc;
 end;
 GO

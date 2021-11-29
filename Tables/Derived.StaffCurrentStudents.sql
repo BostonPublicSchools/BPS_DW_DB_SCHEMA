@@ -4,7 +4,9 @@ CREATE TABLE [Derived].[StaffCurrentStudents]
 [StudentKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Derived].[StaffCurrentStudents] ADD CONSTRAINT [PK_Derived_StaffCurrentStudents] PRIMARY KEY CLUSTERED  ([StaffKey], [StudentKey]) ON [PRIMARY]
+ALTER TABLE [Derived].[StaffCurrentStudents] ADD CONSTRAINT [PK_Derived_StaffCurrentStudents] PRIMARY KEY CLUSTERED ([StaffKey], [StudentKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_Derived_StaffCurrentStudents] ON [Derived].[StaffCurrentStudents] ([StaffKey], [StudentKey]) ON [PRIMARY]
 GO
 ALTER TABLE [Derived].[StaffCurrentStudents] ADD CONSTRAINT [FK_Derived_StaffCurrentStudents_StaffKey] FOREIGN KEY ([StaffKey]) REFERENCES [dbo].[DimStaff] ([StaffKey])
 GO

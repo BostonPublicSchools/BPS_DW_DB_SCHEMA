@@ -21,10 +21,11 @@ CREATE TABLE [dbo].[DimSchool]
 [ValidTo] [datetime] NOT NULL,
 [IsCurrent] [bit] NOT NULL,
 [IsLatest] [bit] NOT NULL,
-[LineageKey] [int] NOT NULL
+[LineageKey] [int] NOT NULL,
+[BPSSchool_Indicator] [bit] NOT NULL CONSTRAINT [DF__DimSchool__BPSSc__6FADA130] DEFAULT ((0))
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[DimSchool] ADD CONSTRAINT [PK_DimSchool] PRIMARY KEY CLUSTERED  ([SchoolKey]) ON [PRIMARY]
+ALTER TABLE [dbo].[DimSchool] ADD CONSTRAINT [PK_DimSchool] PRIMARY KEY CLUSTERED ([SchoolKey]) ON [PRIMARY]
 GO
 CREATE NONCLUSTERED INDEX [DimSchool_CoveringIndex] ON [dbo].[DimSchool] ([_sourceKey], [ValidFrom]) INCLUDE ([ValidTo], [SchoolKey]) ON [PRIMARY]
 GO

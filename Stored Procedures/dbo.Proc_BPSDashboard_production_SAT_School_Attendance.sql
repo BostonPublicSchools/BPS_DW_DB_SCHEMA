@@ -18,8 +18,6 @@ begin
     --This will allow for dirty reads. By default SQL Server uses "READ COMMITED" 
     set transaction isolation level read uncommitted;
 
-    set identity_insert BPSDashboard.dbo.SAT_School_Attendance on;
-
     insert BPSDashboard.dbo.SAT_School_Attendance
     (
         SAT_SKL_ID
@@ -30,25 +28,18 @@ begin
       , SAT_COUNT_PRESENT
       , SAT_COUNT_ABSENT
       , SAT_COUNT_TARDY
-      , SATID
     )
-    select SAT_SKL_ID
-         , SAT_BATCH
-         , SAT_RECORD_DATE
-         , SAT_CREATE_DATE
-         , SAT_COUNT_TOTAL
-         , SAT_COUNT_PRESENT
-         , SAT_COUNT_ABSENT
-         , SAT_COUNT_TARDY
-         , SATID
-    from BPSDashboard.staging.SAT_School_Attendance
-    where not (
-                  SAT_SKL_ID = BPSDashboard.staging.SAT_School_Attendance.SAT_SKL_ID
-                  and SAT_RECORD_DATE = BPSDashboard.staging.SAT_School_Attendance.SAT_RECORD_DATE
-              );
-
-
-    set identity_insert BPSDashboard.dbo.SAT_School_Attendance off;
+    select stage.SAT_SKL_ID
+         , stage.SAT_BATCH
+         , stage.SAT_RECORD_DATE
+         , stage.SAT_CREATE_DATE
+         , stage.SAT_COUNT_TOTAL
+         , stage.SAT_COUNT_PRESENT
+         , stage.SAT_COUNT_ABSENT
+         , stage.SAT_COUNT_TARDY
+    from BPSDashboard.staging.SAT_School_Attendance stage
+	left join BPSDashboard.dbo.SAT_School_Attendance prod on stage.SAT_SKL_ID = prod.SAT_SKL_ID and stage.SAT_RECORD_DATE = prod.SAT_RECORD_DATE
+    where prod.SATID is null;
 
     declare @sklId        int
           , @recordDate   date

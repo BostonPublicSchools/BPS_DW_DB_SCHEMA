@@ -28,7 +28,7 @@ begin
           and not StateSchoolCode = 'N/A'
           and BPSSchool_Indicator = 1;
 
-    update BPSGranary02.BPSDashboard.dbo.SKL_School
+    update BPSDashboard.dbo.SKL_School
     set SKL_ZIP_CODE = schoollocation.zip
       , SKL_NEIGHBORHOOD = COBCity
     from [BPSDATA-03].BPSInterface.dbo.schoollocation

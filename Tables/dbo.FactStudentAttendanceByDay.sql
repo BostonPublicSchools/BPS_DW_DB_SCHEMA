@@ -9,7 +9,9 @@ CREATE TABLE [dbo].[FactStudentAttendanceByDay]
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [PK_FactStudentAttendanceByDay] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
+ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [PK_FactStudentAttendanceByDay] PRIMARY KEY CLUSTERED ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentAttendanceByDay] ON [dbo].[FactStudentAttendanceByDay] ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey], [AttendanceEventReason], [LineageKey]) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[FactStudentAttendanceByDay] ADD CONSTRAINT [FK_FactStudentAttendanceByDay_AttendanceEventCategoryKey] FOREIGN KEY ([AttendanceEventCategoryKey]) REFERENCES [dbo].[DimAttendanceEventCategory] ([AttendanceEventCategoryKey])
 GO

@@ -13,5 +13,7 @@ CREATE TABLE [Derived].[StudentAssessmentScore]
 [ScaleScore] [nvarchar] (500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Derived].[StudentAssessmentScore] ADD CONSTRAINT [PK_Derived_StudentAssessmentScore] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [AssessmentKey]) ON [PRIMARY]
+ALTER TABLE [Derived].[StudentAssessmentScore] ADD CONSTRAINT [PK_Derived_StudentAssessmentScore] PRIMARY KEY CLUSTERED ([StudentKey], [TimeKey], [AssessmentKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_Derived_StudentAssessmentScore] ON [Derived].[StudentAssessmentScore] ([StudentKey], [TimeKey], [AssessmentKey], [AchievementProficiencyLevel], [CompositeRating], [CompositeScore], [PercentileRank], [ProficiencyLevel], [PromotionScore], [RawScore], [ScaleScore]) ON [PRIMARY]
 GO

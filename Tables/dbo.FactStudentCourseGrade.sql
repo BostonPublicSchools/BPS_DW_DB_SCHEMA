@@ -9,7 +9,9 @@ CREATE TABLE [dbo].[FactStudentCourseGrade]
 [LineageKey] [int] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [dbo].[FactStudentCourseGrade] ADD CONSTRAINT [PK_FactStudentCourseGrade] PRIMARY KEY CLUSTERED  ([TimeKey], [GradingPeriodKey], [StudentSectionKey]) ON [PRIMARY]
+ALTER TABLE [dbo].[FactStudentCourseGrade] ADD CONSTRAINT [PK_FactStudentCourseGrade] PRIMARY KEY CLUSTERED ([TimeKey], [GradingPeriodKey], [StudentSectionKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_FactStudentCourseGrades] ON [dbo].[FactStudentCourseGrade] ([TimeKey], [GradingPeriodKey], [StudentSectionKey], [LetterGradeEarned], [NumericGradeEarned], [LineageKey]) ON [PRIMARY]
 GO
 ALTER TABLE [dbo].[FactStudentCourseGrade] ADD CONSTRAINT [FK_FactStudentCourseGrade_GradingPeriodKey] FOREIGN KEY ([GradingPeriodKey]) REFERENCES [dbo].[DimGradingPeriod] ([GradingPeriodKey])
 GO

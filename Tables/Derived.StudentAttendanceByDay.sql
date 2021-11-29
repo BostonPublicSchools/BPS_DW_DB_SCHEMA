@@ -12,5 +12,7 @@ CREATE TABLE [Derived].[StudentAttendanceByDay]
 [Tardy] [bit] NOT NULL
 ) ON [PRIMARY]
 GO
-ALTER TABLE [Derived].[StudentAttendanceByDay] ADD CONSTRAINT [PK_Derived_StudentAttendanceByDay] PRIMARY KEY CLUSTERED  ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
+ALTER TABLE [Derived].[StudentAttendanceByDay] ADD CONSTRAINT [PK_Derived_StudentAttendanceByDay] PRIMARY KEY CLUSTERED ([StudentKey], [TimeKey], [SchoolKey], [AttendanceEventCategoryKey]) ON [PRIMARY]
+GO
+CREATE NONCLUSTERED COLUMNSTORE INDEX [CSI_Derived_StudentAttendanceByDay] ON [Derived].[StudentAttendanceByDay] ([StudentKey], [TimeKey], [SchoolKey], [EarlyDeparture], [ExcusedAbsence], [UnexcusedAbsence], [NoContact], [InAttendance], [Tardy]) ON [PRIMARY]
 GO
