@@ -293,7 +293,8 @@ BEGIN
 										WHERE spas.StudentUSI = s.StudentUSI
 											  AND GETDATE()
 											  BETWEEN spas.BeginDate AND COALESCE(spas.ServiceEndDate, '12/31/9999')
-											  AND sspe.IEPExitDate IS NULL) THEN 1 ELSE 0 END AS IEP_Indicator,
+											  AND sspe.IEPExitDate IS NULL
+											  AND NOT sspe.ProgramName= '504 Plan') THEN 1 ELSE 0 END AS IEP_Indicator,
 	   
 			   COALESCE(lepd.CodeValue,'N/A') AS LimitedEnglishProficiencyDescriptor_CodeValue,
 			   COALESCE(lepd.CodeValue,'N/A') AS LimitedEnglishProficiencyDescriptor_Description,
